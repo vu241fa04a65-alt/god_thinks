@@ -134,10 +134,22 @@ export const ReportService = {
 };
 
 export const ExpertService = {
-  getPendingReports: async (skip = 0, limit = 20) => {
-    return api.get(`/expert/pending?skip=${skip}&limit=${limit}`);
+  getPendingReports: async (cropType?: string, offset = 0, limit = 50) => {
+    return api.get('/expert/pending', {
+      params: {
+        crop_type: cropType || undefined,
+        offset,
+        limit,
+      },
+    });
   },
-  validateReport: async (payload: { report_id: number; decision: 'approve' | 'reject'; notes?: string }) => {
+  validateReport: async (payload: {
+    report_id: number;
+    decision: 'approve' | 'reject' | 'approved' | 'rejected' | 'verified';
+    notes?: string;
+    expert_notes?: string;
+    corrected_disease?: string;
+  }) => {
     return api.post('/expert/validate', payload);
   },
   getAuditTrail: async (limit = 50) => {

@@ -18,6 +18,7 @@ interface AuthContextType {
   register: (payload: any) => Promise<any>;
   logout: () => void;
   isExpert: boolean;
+  setRole: (role: 'farmer' | 'expert' | 'admin') => void;
   updatePoints: (newPoints: number, reason?: string, badge?: string) => void;
 }
 
@@ -105,6 +106,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const setRole = (role: 'farmer' | 'expert' | 'admin') => {
+    if (user) {
+      const updated = { ...user, role };
+      setUser(updated);
+      localStorage.setItem('user_info', JSON.stringify(updated));
+    } else {
+      const demoUser: User = {
+        id: 99,
+        email: 'expert.agronomist@crophealth.ai',
+        name: 'Dr. Sanjay Deshmukh',
+        role,
+        points: 250,
+      };
+      setUser(demoUser);
+      localStorage.setItem('user_info', JSON.stringify(demoUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -114,7 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
-        isExpert: user?.role === 'expert' || user?.role === 'admin',
+        isExpert: user?.role === 'expert',
+        setRole,
         updatePoints,
       }}
     >
