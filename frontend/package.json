@@ -6,28 +6,36 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "jest"
   },
   "dependencies": {
+    "axios": "^1.7.7",
+    "i18next": "^23.15.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.441.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.2",
-    "axios": "^1.7.7",
-    "lucide-react": "^0.441.0",
-    "i18next": "^23.15.1",
     "react-i18next": "^15.0.2",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1"
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/jest": "^30.0.0",
+    "@types/leaflet": "^1.9.12",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
-    "@types/leaflet": "^1.9.12",
     "@vitejs/plugin-react": "^4.3.1",
-    "typescript": "^5.5.4",
-    "vite": "^5.4.3",
-    "tailwindcss": "^3.4.10",
+    "autoprefixer": "^10.4.20",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
     "postcss": "^8.4.45",
-    "autoprefixer": "^10.4.20"
+    "tailwindcss": "^3.4.10",
+    "ts-jest": "^29.4.12",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3"
   }
 }
