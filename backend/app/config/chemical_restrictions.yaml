@@ -1,0 +1,72 @@
+# Regional chemical bans and restrictions configuration
+regions:
+  kerala:
+    name: "Kerala State, India"
+    banned_chemicals:
+      - "monocrotophos"
+      - "paraquat"
+      - "paraquat dichloride"
+      - "carbendazim"
+      - "chlorpyrifos"
+      - "endosulfan"
+    restricted_chemicals:
+      - "mancozeb"
+    warning: "STRICT BAN: Prohibited under Kerala State Organic Farming Policy and statutory notification."
+
+  punjab:
+    name: "Punjab State, India"
+    banned_chemicals:
+      - "monocrotophos"
+      - "carbendazim"
+      - "paraquat"
+      - "paraquat dichloride"
+    restricted_chemicals:
+      - "chlorpyrifos"
+      - "propiconazole"
+    warning: "RESTRICTION WARNING: Subsidies withheld and application restricted to avoid chemical residues."
+
+  andhra pradesh:
+    name: "Andhra Pradesh, India"
+    banned_chemicals:
+      - "endosulfan"
+      - "monocrotophos"
+    restricted_chemicals:
+      - "chlorpyrifos"
+      - "carbendazim"
+    warning: "REGIONAL ADVISORY: Community natural farming (APCNF) zones prohibit synthetic organophosphates."
+
+  telangana:
+    name: "Telangana, India"
+    banned_chemicals:
+      - "endosulfan"
+    restricted_chemicals:
+      - "monocrotophos"
+      - "chlorpyrifos"
+    warning: "RESTRICTED: Regulated under Telangana state integrated pest surveillance guidelines."
+
+  european union:
+    name: "European Union"
+    banned_chemicals:
+      - "chlorpyrifos"
+      - "mancozeb"
+      - "carbendazim"
+      - "paraquat"
+      - "paraquat dichloride"
+      - "monocrotophos"
+    restricted_chemicals:
+      - "propiconazole"
+    warning: "EU BANNED: Substance unauthorized under EU Regulation (EC) No 1107/2009."
+
+  united states:
+    name: "United States (EPA)"
+    banned_chemicals:
+      - "chlorpyrifos"
+      - "monocrotophos"
+    restricted_chemicals:
+      - "paraquat"
+      - "paraquat dichloride"
+    warning: "EPA WARNING: Restricted Use Pesticide (RUP); requires certified applicator licensing."
+
+global_banned:
+  - "endosulfan"
+  - "aldicarb"
