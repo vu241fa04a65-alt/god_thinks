@@ -10,6 +10,24 @@ from backend.app.config import settings
 from backend.app.database import engine, Base
 from backend.app.utils.logger import logger
 from backend.app.routes import success_envelope, error_envelope
+from backend.app.utils.metrics import PrometheusMiddleware, router as metrics_router, DB_HEALTH_GAUGE
+
+# Initialize Sentry Error Tracking if DSN is configured
+if settings.SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.ENVIRONMENT,
+            traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+            integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+            send_default_pii=False,
+        )
+        logger.info(f"Sentry SDK initialized successfully for environment: {settings.ENVIRONMENT}")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Sentry SDK: {e}")
 
 # Import Route Modules
 from backend.app.routes.auth import router as auth_router
@@ -66,6 +84,9 @@ def create_app() -> FastAPI:
     # Security & Auth Audit Middleware
     application.add_middleware(AuthAuditMiddleware)
 
+    # Prometheus Metrics Tracking Middleware
+    application.add_middleware(PrometheusMiddleware)
+
     # CORS Middleware
     application.add_middleware(
         CORSMiddleware,
@@ -105,15 +126,61 @@ def create_app() -> FastAPI:
             content=error_envelope(message=str(exc), code=500)
         )
 
-    # Health Endpoints
+    # Health & Readiness Probes for Containerized Deployments
     @application.get("/health")
     @application.get(f"{settings.API_V1_STR}/health")
     def health_check():
+        """Liveness probe: verifies process is alive and responding."""
         return success_envelope(data={
             "status": "healthy",
             "service": settings.PROJECT_NAME,
-            "environment": settings.ENVIRONMENT
+            "environment": settings.ENVIRONMENT,
+            "version": "1.0.0"
         })
+
+    @application.get("/ready")
+    @application.get(f"{settings.API_V1_STR}/ready")
+    def readiness_check():
+        """Readiness probe: verifies database connectivity and storage volume status."""
+        import os
+        from sqlalchemy import text
+        from backend.app.database import engine
+        from backend.app.utils.storage import STORAGE_DIR
+
+        checks = {
+            "database": "degraded",
+            "storage": "degraded"
+        }
+        is_ready = True
+
+        # 1. Database connection check
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            checks["database"] = "ready"
+            DB_HEALTH_GAUGE.set(1)
+        except Exception as e:
+            is_ready = False
+            checks["database"] = f"unhealthy: {str(e)}"
+            DB_HEALTH_GAUGE.set(0)
+
+        # 2. Storage write accessibility check
+        try:
+            if os.path.exists(STORAGE_DIR) and os.access(STORAGE_DIR, os.W_OK):
+                checks["storage"] = "ready"
+            else:
+                is_ready = False
+                checks["storage"] = "unwritable"
+        except Exception as e:
+            is_ready = False
+            checks["storage"] = f"unhealthy: {str(e)}"
+
+        if is_ready:
+            return success_envelope(data={"status": "ready", "checks": checks})
+        return JSONResponse(
+            status_code=503,
+            content=error_envelope(message="Service Not Ready", code=503, details=checks)
+        )
 
     @application.get("/")
     def root():
@@ -137,7 +204,8 @@ def create_app() -> FastAPI:
         ml_router,
         sync_router,
         advisory_router,
-        chatbot_router
+        chatbot_router,
+        metrics_router
     ]
 
     for r in routers:

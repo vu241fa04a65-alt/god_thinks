@@ -49,5 +49,7 @@ ml_model/output/*.png
 ml_model/output/*.jpg
 ml_model/output/*.jpeg
 !ml_model/output/.gitkeep
-
-
+# Logs & Telemetry
+*.log
+backend/logs/*
+!backend/logs/.gitkeep

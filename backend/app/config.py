@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     # Caching / Redis
     REDIS_URL: Optional[str] = os.getenv("REDIS_URL", "")
 
+    # Observability & Monitoring
+    SENTRY_DSN: Optional[str] = os.getenv("SENTRY_DSN", "")
+    SENTRY_TRACES_SAMPLE_RATE: float = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.2"))
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_DIR: str = os.getenv("LOG_DIR", "logs")
+    LOG_ROTATION_MAX_BYTES: int = int(os.getenv("LOG_ROTATION_MAX_BYTES", "10485760"))  # 10MB
+    LOG_ROTATION_BACKUP_COUNT: int = int(os.getenv("LOG_ROTATION_BACKUP_COUNT", "5"))
+
     model_config = ConfigDict(
         env_file=".env",
         case_sensitive=True,
