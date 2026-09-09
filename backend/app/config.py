@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     OPENWEATHER_API_KEY: str = os.getenv("OPENWEATHER_API_KEY", "")
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     ML_INFERENCE_ENDPOINT: str = os.getenv("ML_INFERENCE_ENDPOINT", "http://localhost:8000/ml/inference")
+    ML_RUN_LOCAL: bool = os.getenv("ML_RUN_LOCAL", "true").lower() in ("true", "1", "yes")
+    INTERNAL_ML_ENDPOINT: str = os.getenv("INTERNAL_ML_ENDPOINT", "http://127.0.0.1:8000/ml/infer")
 
     model_config = ConfigDict(
         env_file=".env",

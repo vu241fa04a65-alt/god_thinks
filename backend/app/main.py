@@ -19,6 +19,7 @@ from backend.app.routes.gamification import router as gamification_router
 from backend.app.controllers.disease_detection import router as disease_router
 from backend.app.controllers.weather import router as weather_router
 from backend.app.controllers.alerts import router as alerts_router
+from backend.app.routes.ml_proxy import router as ml_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -108,7 +109,8 @@ def create_app() -> FastAPI:
         gamification_router,
         disease_router,
         weather_router,
-        alerts_router
+        alerts_router,
+        ml_router
     ]
 
     for r in routers:
