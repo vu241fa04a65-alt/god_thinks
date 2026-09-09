@@ -9,6 +9,7 @@ import { Leaderboard } from './pages/Leaderboard';
 import { Login } from './pages/Login';
 import { Settings } from './pages/Settings';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { Leaf, LogOut, User as UserIcon, Settings as SettingsIcon } from 'lucide-react';
 
 import { Chatbot } from './components/Chatbot';
@@ -61,9 +62,14 @@ const NavigationBar: React.FC = () => {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-1 rounded-full border border-emerald-200">
-                {user.points || 0} pts
-              </span>
+              <Link
+                to="/leaderboard"
+                title="View Leaderboard & Badges"
+                className="flex items-center gap-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1 rounded-full border border-emerald-200 transition-colors"
+              >
+                <span>🏆</span>
+                <span>{user.points || 0} pts</span>
+              </Link>
               <span className="text-xs font-semibold text-gray-700 hidden sm:inline">
                 {user.name}
               </span>
@@ -106,28 +112,30 @@ const Footer: React.FC = () => (
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900">
-          <div>
-            <OfflineIndicator />
-            <NavigationBar />
-            <main className="pt-4">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/report" element={<Report />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/expert" element={<ExpertPortal />} />
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </main>
+      <ToastProvider>
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900">
+            <div>
+              <OfflineIndicator />
+              <NavigationBar />
+              <main className="pt-4">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/report" element={<Report />} />
+                  <Route path="/community" element={<Community />} />
+                  <Route path="/expert" element={<ExpertPortal />} />
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Routes>
+              </main>
+            </div>
+            <Chatbot />
+            <Footer />
           </div>
-          <Chatbot />
-          <Footer />
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 };

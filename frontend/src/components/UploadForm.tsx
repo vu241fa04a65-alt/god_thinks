@@ -3,6 +3,8 @@ import { UploadCloud, Image as ImageIcon, MapPin, AlertCircle, Loader2, Sparkles
 import { ReportService } from '../services/api';
 import { DiseaseResult } from './DiseaseResultCard';
 import { OfflineSyncService } from '../services/offlineSync';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 interface UploadFormProps {
   onDiagnosisComplete: (result: DiseaseResult) => void;
@@ -22,6 +24,8 @@ const COMMON_CROPS = [
 ];
 
 export const UploadForm: React.FC<UploadFormProps> = ({ onDiagnosisComplete }) => {
+  const { user, updatePoints } = useAuth();
+  const { showPointsToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cropType, setCropType] = useState<string>('Tomato');
@@ -140,6 +144,12 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onDiagnosisComplete }) =
           overlay_base64: responseData.overlay_base64,
           explanation: responseData.explanation,
         };
+
+        const awarded = responseData.points_awarded || 10;
+        const currentPts = user?.points ?? 45;
+        updatePoints(currentPts + awarded, `Uploaded ${cropType} Leaf Observation`);
+        showPointsToast(awarded, `Diagnosed ${cropType}: ${result.disease_predicted}`);
+
         onDiagnosisComplete(result);
       }
     } catch (err: any) {

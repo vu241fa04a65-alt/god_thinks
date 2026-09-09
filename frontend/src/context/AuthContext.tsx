@@ -18,7 +18,7 @@ interface AuthContextType {
   register: (payload: any) => Promise<any>;
   logout: () => void;
   isExpert: boolean;
-  updatePoints: (newPoints: number) => void;
+  updatePoints: (newPoints: number, reason?: string, badge?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,11 +87,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
   };
 
-  const updatePoints = (newPoints: number) => {
+  const updatePoints = (newPoints: number, reason?: string, badge?: string) => {
     if (user) {
+      const oldPoints = user.points || 0;
+      const delta = newPoints - oldPoints;
       const updated = { ...user, points: newPoints };
       setUser(updated);
       localStorage.setItem('user_info', JSON.stringify(updated));
+
+      if (delta > 0 && reason) {
+        // Dispatch toast notification for points awarded
+        const event = new CustomEvent('crophealth-points-awarded', {
+          detail: { points: delta, reason, badge },
+        });
+        window.dispatchEvent(event);
+      }
     }
   };
 

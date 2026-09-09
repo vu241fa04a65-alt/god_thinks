@@ -158,17 +158,23 @@ export const CommunityService = {
 };
 
 export const GamificationService = {
-  getPoints: async () => {
-    return api.get('/gamification/points');
+  getPoints: async (userId?: number) => {
+    return api.get('/gamification/points', { params: userId ? { user_id: userId } : undefined });
   },
-  getLeaderboard: async (limit = 20) => {
+  getLeaderboard: async (limit = 50) => {
     return api.get(`/gamification/leaderboard?limit=${limit}`);
   },
   getCatalog: async () => {
     return api.get('/gamification/catalog');
   },
-  claimReward: async (rewardKey: string) => {
-    return api.post('/gamification/claim', { reward_key: rewardKey });
+  claimReward: async (rewardItemId: string, userId?: number) => {
+    return api.post('/gamification/claim', { reward_item_id: rewardItemId, user_id: userId });
+  },
+  awardAction: async (action: string, userId?: number) => {
+    return api.post('/gamification/action', { action, user_id: userId });
+  },
+  awardPoints: async (points: number, reason: string, userId?: number) => {
+    return api.post('/gamification/reward', { points, reason, user_id: userId });
   },
 };
 
