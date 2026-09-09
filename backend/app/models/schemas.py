@@ -127,9 +127,21 @@ class ExpertValidateRequest(BaseModel):
     expert_notes: Optional[str] = None
     corrected_disease: Optional[str] = None
 
+class GeoFence(BaseModel):
+    lat: float
+    lng: float
+    radius_km: float = 25.0
+
 class SMSAlertRequest(BaseModel):
-    phone_number: str
+    phone_number: Optional[str] = None
     message: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    lon: Optional[float] = None
+    radius_km: Optional[float] = None
+    disease: Optional[str] = None
+    crop: Optional[str] = None
+    geo_fence: Optional[GeoFence] = None
 
 class TreatmentAdvisory(BaseModel):
     causes: str

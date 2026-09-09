@@ -21,6 +21,7 @@ from backend.app.controllers.disease_detection import router as disease_router
 from backend.app.routes.weather import router as weather_router
 from backend.app.controllers.alerts import router as alerts_router
 from backend.app.routes.ml_proxy import router as ml_router
+from backend.app.routes.sync import router as sync_router
 from backend.app.auth import AuthAuditMiddleware
 
 @asynccontextmanager
@@ -115,7 +116,8 @@ def create_app() -> FastAPI:
         disease_router,
         weather_router,
         alerts_router,
-        ml_router
+        ml_router,
+        sync_router
     ]
 
     for r in routers:

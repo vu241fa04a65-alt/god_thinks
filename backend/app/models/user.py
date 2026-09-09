@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float
 from sqlalchemy.orm import relationship
 from backend.app.models.base import Base
 
@@ -15,6 +15,10 @@ class User(Base):
     hashed_password = Column(String(255), nullable=True)
     preferred_language = Column(String(50), default="en", nullable=False)
     points = Column(Integer, default=0, nullable=False, index=True)
+    sms_opt_in = Column(Boolean, default=True, nullable=False)
+    location = Column(String(255), nullable=True)
+    location_lat = Column(Float, nullable=True)
+    location_lng = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships with cascade delete
