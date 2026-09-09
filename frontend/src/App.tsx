@@ -10,6 +10,8 @@ import { Login } from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Leaf, LogOut, User as UserIcon } from 'lucide-react';
 
+import { Chatbot } from './components/Chatbot';
+
 const NavigationBar: React.FC = () => {
   const { user, logout, isExpert } = useAuth();
 
@@ -115,6 +117,7 @@ export const App: React.FC = () => {
               </Routes>
             </main>
           </div>
+          <Chatbot />
           <Footer />
         </div>
       </BrowserRouter>

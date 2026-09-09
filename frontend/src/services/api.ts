@@ -183,3 +183,13 @@ export const AdvisoryService = {
     return api.get('/advisory/recommend', { params: { crop, disease, region } });
   },
 };
+
+export const ChatbotService = {
+  getAdvice: async (payload: {
+    message: string;
+    language: string;
+    context?: Record<string, any>;
+  }) => {
+    return api.post('/chatbot/advice', payload);
+  },
+};

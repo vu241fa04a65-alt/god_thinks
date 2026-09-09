@@ -13,7 +13,27 @@ LANGUAGE_DICT: Dict[str, Dict[str, str]] = {
         "Corn Common Rust": "मक्के का रतुआ रोग",
         "Moderate": "मध्यम",
         "Severe": "गंभीर",
-        "Low": "कम"
+        "Low": "कम",
+        "Treatment Advisory": "उपचार परामर्श",
+        "Preventive Actions": "निवारक उपाय",
+        "Safety Warning": "सुरक्षा चेतावनी",
+        "Recommended Chemicals": "अनुशंसित रसायन",
+        "Biological Control": "जैविक नियंत्रण"
+    },
+    "mr": {
+        "Healthy": "निरोगी",
+        "Tomato Early Blight": "टोमॅटोवरील लवकर येणारा करपा",
+        "Tomato Late Blight": "टोमॅटोवरील उशिरा येणारा करपा",
+        "Potato Early Blight": "बटाट्यावरील लवकर येणारा करपा",
+        "Grape Downy Mildew": "द्राक्षावरील केवडा रोग",
+        "Moderate": "मध्यम",
+        "Severe": "तीव्र",
+        "Low": "कमी",
+        "Treatment Advisory": "उपचार सल्ला",
+        "Preventive Actions": "प्रतिबंधात्मक उपाय",
+        "Safety Warning": "सुरक्षा चेतावणी",
+        "Recommended Chemicals": "शिफारस केलेली रसायने",
+        "Biological Control": "जैविक नियंत्रण"
     },
     "te": {
         "Healthy": "ఆరోగ్యకరమైనది",
@@ -21,7 +41,12 @@ LANGUAGE_DICT: Dict[str, Dict[str, str]] = {
         "Tomato Late Blight": "టమోటా ఆలస్యపు తెగులు",
         "Moderate": "మధ్యస్థం",
         "Severe": "తీవ్రమైనది",
-        "Low": "తక్కువ"
+        "Low": "తక్కువ",
+        "Treatment Advisory": "చికిత్స సలహా",
+        "Preventive Actions": "నివారణ చర్యలు",
+        "Safety Warning": "భద్రతా హెచ్చరిక",
+        "Recommended Chemicals": "సిఫార్సు చేయబడిన రసాయనాలు",
+        "Biological Control": "జీవ నియంత్రణ"
     },
     "ta": {
         "Healthy": "ஆரோக்கியமானது",
