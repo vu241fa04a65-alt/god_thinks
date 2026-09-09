@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Leaf, LogOut, User as UserIcon } from 'lucide-react';
 
 import { Chatbot } from './components/Chatbot';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 const NavigationBar: React.FC = () => {
   const { user, logout, isExpert } = useAuth();
@@ -104,6 +105,7 @@ export const App: React.FC = () => {
       <BrowserRouter>
         <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900">
           <div>
+            <OfflineIndicator />
             <NavigationBar />
             <main className="pt-4">
               <Routes>
