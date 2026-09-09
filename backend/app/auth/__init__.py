@@ -6,7 +6,11 @@ from backend.app.auth.dependencies import (
     oauth2_optional_scheme
 )
 from backend.app.auth.limiter import login_limiter
-from backend.app.auth.middleware import AuthAuditMiddleware
+from backend.app.auth.middleware import (
+    AuthAuditMiddleware,
+    SecurityHeadersMiddleware,
+    GlobalRateLimitMiddleware
+)
 
 __all__ = [
     "get_current_user",
@@ -15,5 +19,7 @@ __all__ = [
     "oauth2_scheme",
     "oauth2_optional_scheme",
     "login_limiter",
-    "AuthAuditMiddleware"
+    "AuthAuditMiddleware",
+    "SecurityHeadersMiddleware",
+    "GlobalRateLimitMiddleware"
 ]

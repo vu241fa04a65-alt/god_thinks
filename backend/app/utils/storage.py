@@ -78,9 +78,63 @@ def _get_s3_client():
         return None
 
 
+from backend.app.utils.sanitizer import sanitize_filename
+
+# Malicious executable magic byte signatures
+MALICIOUS_MAGIC_HEADERS = [
+    (b"MZ", "DOS/Windows Executable (PE)"),
+    (b"\x7fELF", "Linux Executable (ELF)"),
+    (b"\xca\xfe\xba\xbe", "Java Class Bytecode"),
+    (b"#!", "Shell Script / Shebang"),
+    (b"\x55\x0d\x0d\x0a", "Compiled Python Bytecode (pyc)"),
+    (b"%PDF", "PDF Document (Disguised File)"),
+]
+
+# Suspicious script patterns within image payload
+SUSPICIOUS_PAYLOAD_PATTERNS = [
+    b"<?php",
+    b"<?=",
+    b"<script",
+    b"</script>",
+    b"javascript:",
+    b"eval(",
+    b"base64_decode(",
+    b"shell_exec(",
+    b"passthru(",
+    b"system(",
+]
+
+
+def scan_for_malware_signatures(image_bytes: bytes) -> None:
+    """
+    Perform heuristic and signature checks on uploaded bytes to detect
+    disguised executables, polyglots, and embedded script payloads.
+    """
+    # 1. Header magic byte validation
+    for magic, desc in MALICIOUS_MAGIC_HEADERS:
+        if image_bytes.startswith(magic):
+            logger.warning(f"[Malware Scan] Blocked file with signature: {desc}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Security violation: Uploaded file matches restricted executable signature ({desc})."
+            )
+
+    # 2. Deep payload inspection for embedded web shells and scripts
+    sample_chunk = image_bytes[:8192] + (image_bytes[-8192:] if len(image_bytes) > 8192 else b"")
+    sample_lower = sample_chunk.lower()
+
+    for pattern in SUSPICIOUS_PAYLOAD_PATTERNS:
+        if pattern in sample_lower:
+            logger.warning(f"[Malware Scan] Detected suspicious script pattern: {pattern.decode('latin-1')}")
+            raise HTTPException(
+                status_code=400,
+                detail="Security violation: Uploaded file contains forbidden script or executable tags."
+            )
+
+
 def validate_image(image_bytes: bytes, filename: Optional[str] = None) -> Image.Image:
     """
-    Validate image file size, extension, and integrity.
+    Validate image file size, malware signatures, extension, dimensions, and integrity.
     Returns loaded PIL Image in RGB format.
     """
     # 1. Size Validation
@@ -93,16 +147,20 @@ def validate_image(image_bytes: bytes, filename: Optional[str] = None) -> Image.
             detail=f"Image size ({len(image_bytes) / 1024 / 1024:.2f}MB) exceeds maximum limit of {settings.MAX_IMAGE_SIZE_MB}MB"
         )
 
-    # 2. Extension Validation (if filename provided)
+    # 2. Malware & Polyglot Signature Scan
+    scan_for_malware_signatures(image_bytes)
+
+    # 3. Extension & Filename Validation (if filename provided)
     if filename:
-        ext = os.path.splitext(filename)[1].lower()
+        clean_filename = sanitize_filename(filename)
+        ext = os.path.splitext(clean_filename)[1].lower()
         if ext and ext not in ALLOWED_EXTENSIONS:
             raise HTTPException(
                 status_code=400,
                 detail=f"Unsupported file extension '{ext}'. Allowed extensions: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
             )
 
-    # 3. Content / Magic Bytes Integrity Validation
+    # 4. Content / Magic Bytes Integrity Validation
     try:
         pil_img = Image.open(io.BytesIO(image_bytes))
         fmt = (pil_img.format or "").upper()
@@ -111,6 +169,14 @@ def validate_image(image_bytes: bytes, filename: Optional[str] = None) -> Image.
                 status_code=400,
                 detail=f"Unsupported image format '{fmt}'. Allowed formats: JPEG, PNG, WEBP, BMP"
             )
+
+        # Decompression bomb / dimension protection (Max 8000x8000 pixels)
+        if pil_img.width > 8000 or pil_img.height > 8000:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Image dimensions ({pil_img.width}x{pil_img.height}) exceed maximum allowed 8000x8000."
+            )
+
         # Verify image stream integrity
         pil_img.verify()
         # Re-open for transformation since verify() closes/empties stream

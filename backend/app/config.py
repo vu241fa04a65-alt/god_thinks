@@ -47,6 +47,19 @@ class Settings(BaseSettings):
     LOG_ROTATION_MAX_BYTES: int = int(os.getenv("LOG_ROTATION_MAX_BYTES", "10485760"))  # 10MB
     LOG_ROTATION_BACKUP_COUNT: int = int(os.getenv("LOG_ROTATION_BACKUP_COUNT", "5"))
 
+    # Security Hardening & Networking
+    CORS_ORIGINS: str = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    )
+    ENFORCE_HTTPS: bool = os.getenv("ENFORCE_HTTPS", "false").lower() in ("true", "1", "yes")
+    RATE_LIMIT_PER_MINUTE: int = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
+
+    def get_cors_origins(self) -> list[str]:
+        if not self.CORS_ORIGINS:
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
     model_config = ConfigDict(
         env_file=".env",
         case_sensitive=True,

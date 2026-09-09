@@ -42,7 +42,11 @@ from backend.app.routes.ml_proxy import router as ml_router
 from backend.app.routes.sync import router as sync_router
 from backend.app.routes.advisory import router as advisory_router
 from backend.app.routes.chatbot import router as chatbot_router
-from backend.app.auth import AuthAuditMiddleware
+from backend.app.auth import (
+    AuthAuditMiddleware,
+    SecurityHeadersMiddleware,
+    GlobalRateLimitMiddleware
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,18 +85,28 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
 
+    # Defensive Security Headers & HTTPS Enforcement Middleware
+    application.add_middleware(SecurityHeadersMiddleware)
+
+    # API-wide Rate Limiting Middleware
+    application.add_middleware(
+        GlobalRateLimitMiddleware,
+        requests_per_minute=settings.RATE_LIMIT_PER_MINUTE
+    )
+
     # Security & Auth Audit Middleware
     application.add_middleware(AuthAuditMiddleware)
 
     # Prometheus Metrics Tracking Middleware
     application.add_middleware(PrometheusMiddleware)
 
-    # CORS Middleware
+    # CORS Whitelist Middleware
+    cors_origins = settings.get_cors_origins()
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],
     )
 

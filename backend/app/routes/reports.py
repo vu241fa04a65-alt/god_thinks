@@ -65,12 +65,24 @@ async def upload_report(
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
+    from backend.app.utils.storage import validate_image
+    from backend.app.utils.sanitizer import sanitize_text
+
     try:
         image_bytes = await file.read()
         if len(image_bytes) == 0:
             raise HTTPException(status_code=400, detail="Uploaded image file is empty")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+
+    # Validate file integrity, size limit, and malware scan
+    validate_image(image_bytes, filename=file.filename)
+
+    # Sanitize user text inputs
+    clean_crop = sanitize_text(crop_type, max_length=50) if crop_type else None
+    clean_location = sanitize_text(location, max_length=100) if location else "Sector 4 - Farm Node"
 
     # Run ML Inference
     try:
@@ -78,7 +90,7 @@ async def upload_report(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
 
-    detected_crop = crop_type or prediction_result.get("crop_name", "Tomato")
+    detected_crop = clean_crop or prediction_result.get("crop_name", "Tomato")
     disease_name = prediction_result.get("disease_name", "Tomato Early Blight")
     confidence = prediction_result.get("confidence", 0.92)
 

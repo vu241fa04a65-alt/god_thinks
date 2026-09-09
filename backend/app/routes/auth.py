@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from sqlalchemy.orm import Session
 
 from backend.app.config import settings
@@ -32,6 +32,7 @@ from backend.app.auth.dependencies import (
 from backend.app.auth.limiter import login_limiter
 from backend.app.routes import success_envelope, error_envelope
 from backend.app.utils.logger import logger
+from backend.app.utils.sanitizer import sanitize_text
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -39,48 +40,58 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register")
 def register(user_in: RegisterRequest, db: Session = Depends(get_db)):
     """
-    Register a new user with email and phone uniqueness validation.
+    Register a new user with email and phone uniqueness validation and input sanitization.
     """
     if not user_in.name or not user_in.password:
         raise HTTPException(status_code=400, detail="Name and password are required")
 
+    clean_name = sanitize_text(user_in.name, max_length=100)
+    clean_email = user_in.email.strip().lower() if user_in.email else None
+    clean_phone = sanitize_text(user_in.phone, max_length=25) if user_in.phone else None
+
     # Email uniqueness check
-    if user_in.email:
-        existing_email = db.query(User).filter(User.email == user_in.email.strip()).first()
+    if clean_email:
+        existing_email = db.query(User).filter(User.email == clean_email).first()
         if existing_email:
             raise HTTPException(status_code=400, detail="Email is already registered")
 
     # Phone uniqueness check
-    if user_in.phone:
-        existing_phone = db.query(User).filter(User.phone == user_in.phone.strip()).first()
+    if clean_phone:
+        existing_phone = db.query(User).filter(User.phone == clean_phone).first()
         if existing_phone:
             raise HTTPException(status_code=400, detail="Phone number is already registered")
 
     # Username generation & uniqueness check
-    username = (
+    raw_username = (
         user_in.username.strip() if user_in.username
-        else (user_in.email.split("@")[0] if user_in.email else user_in.name.lower().replace(" ", "_"))
+        else (clean_email.split("@")[0] if clean_email else clean_name.lower().replace(" ", "_"))
     )
+    username = sanitize_text(raw_username, max_length=50)
+
     existing_username = db.query(User).filter(User.username == username).first()
     if existing_username:
         raise HTTPException(status_code=400, detail="Username is already taken")
 
     # Create user with hashed password
     new_user = User(
-        name=user_in.name.strip(),
-        email=user_in.email.strip() if user_in.email else None,
-        phone=user_in.phone.strip() if user_in.phone else None,
+        name=clean_name,
         username=username,
-        hashed_password=get_password_hash(user_in.password),
+        email=clean_email,
+        phone=clean_phone,
         role=user_in.role or "farmer",
         preferred_language=user_in.preferred_language or "en",
-        points=user_in.points or 0
+        hashed_password=get_password_hash(user_in.password),
+        points=0
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    logger.info(f"User registered successfully: id={new_user.id}, username='{new_user.username}', role='{new_user.role}'")
+    logger.info(f"Registered new user '{username}' (id={new_user.id}, role={new_user.role})")
+
+    token_data = {"sub": new_user.username, "role": new_user.role, "uid": new_user.id}
+    access_token = create_access_token(data=token_data)
+    refresh_token = create_refresh_token(data={"sub": new_user.username, "uid": new_user.id})
 
     user_data = {
         "id": new_user.id,
@@ -91,15 +102,27 @@ def register(user_in: RegisterRequest, db: Session = Depends(get_db)):
         "role": new_user.role,
         "points": new_user.points,
         "preferred_language": new_user.preferred_language,
-        "created_at": new_user.created_at.isoformat() if new_user.created_at else None
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name,
+            "username": new_user.username,
+            "email": new_user.email,
+            "phone": new_user.phone,
+            "role": new_user.role,
+            "points": new_user.points
+        }
     }
     return success_envelope(data=user_data)
 
 
 @router.post("/login")
-async def login(request: Request, db: Session = Depends(get_db)):
+async def login(request: Request, response: Response, db: Session = Depends(get_db)):
     """
-    Authenticate user, enforce in-memory rate limiting, and issue access and refresh tokens.
+    Authenticate user, enforce in-memory rate limiting, issue access and refresh tokens,
+    and attach secure HttpOnly refresh token cookie.
     """
     client_ip = request.client.host if request.client else "unknown"
 
@@ -155,6 +178,18 @@ async def login(request: Request, db: Session = Depends(get_db)):
     access_token = create_access_token(data=token_data)
     refresh_token = create_refresh_token(data={"sub": user.username, "uid": user.id})
 
+    # Set secure HttpOnly cookie for refresh token
+    is_prod = settings.ENVIRONMENT.lower() == "production"
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=is_prod,
+        samesite="lax",
+        max_age=30 * 24 * 3600,
+        path="/"
+    )
+
     response_data = {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -173,9 +208,9 @@ async def login(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh")
-async def refresh_access_token(request: Request, db: Session = Depends(get_db)):
+async def refresh_access_token(request: Request, response: Response, db: Session = Depends(get_db)):
     """
-    Exchange valid refresh token for a newly minted access token and refresh token.
+    Exchange valid refresh token for newly minted access token and rotated refresh token cookie.
     """
     refresh_token = None
     try:
@@ -183,6 +218,10 @@ async def refresh_access_token(request: Request, db: Session = Depends(get_db)):
         refresh_token = body.get("refresh_token")
     except Exception:
         pass
+
+    if not refresh_token:
+        # Check cookie fallback
+        refresh_token = request.cookies.get("refresh_token")
 
     if not refresh_token:
         # Check Authorization header fallback
@@ -207,9 +246,20 @@ async def refresh_access_token(request: Request, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="User associated with token does not exist")
 
-    # Issue new access token
+    # Issue new access token & rotate refresh token
     new_access_token = create_access_token(data={"sub": user.username, "role": user.role, "uid": user.id})
     new_refresh_token = create_refresh_token(data={"sub": user.username, "uid": user.id})
+
+    is_prod = settings.ENVIRONMENT.lower() == "production"
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=is_prod,
+        samesite="lax",
+        max_age=30 * 24 * 3600,
+        path="/"
+    )
 
     logger.info(f"Refreshed access token for user '{user.username}'")
 
@@ -221,10 +271,18 @@ async def refresh_access_token(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
-def logout(current_user: Optional[User] = Depends(get_optional_current_user)):
+def logout(response: Response, current_user: Optional[User] = Depends(get_optional_current_user)):
     """
-    Invalidate session / logout endpoint.
+    Invalidate session / logout endpoint and clear HttpOnly cookie.
     """
+    is_prod = settings.ENVIRONMENT.lower() == "production"
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=is_prod,
+        samesite="lax",
+        path="/"
+    )
     username = current_user.username if current_user else "anonymous"
     logger.info(f"User '{username}' logged out successfully.")
     return success_envelope(data={
