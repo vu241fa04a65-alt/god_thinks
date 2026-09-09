@@ -39,35 +39,63 @@ god_thinks/
 
 ---
 
-## ⚡ Getting Started
+## 🐳 Running with Docker & Docker Compose
 
-### 1. Clone the Repository
+For an all-in-one local setup with PostgreSQL, Redis, FastAPI Backend, React Frontend, and pgAdmin:
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) installed and running.
+
+### Quick Start
+Run the convenience startup script:
 ```bash
-git clone https://github.com/vu241fa04a65-alt/god_thinks.git
-cd god_thinks
+# On Linux / macOS:
+chmod +x scripts/dev_start.sh
+./scripts/dev_start.sh
+
+# On Windows (PowerShell):
+.\scripts\dev_start.ps1
 ```
 
-### 2. Set Up Virtual Environment
+Or run directly with Docker Compose:
 ```bash
+docker compose up --build
+```
+
+### Services & Port Mappings
+| Service | URL / Port | Credentials / Purpose |
+|---|---|---|
+| **Frontend UI** | [http://localhost:3000](http://localhost:3000) | React Single Page Application served via Nginx |
+| **Backend API** | [http://localhost:8000](http://localhost:8000) | FastAPI application & Uvicorn server |
+| **Interactive API Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | Swagger UI / OpenAPI documentation |
+| **PostgreSQL** | `localhost:5432` | DB: `crophealth_db` (User: `postgres` / Pass: `postgres`) |
+| **Redis** | `localhost:6379` | In-memory caching & background queues |
+| **pgAdmin 4** | [http://localhost:5050](http://localhost:5050) | Email: `admin@crophealth.ai` / Password: `admin` |
+
+---
+
+## ⚡ Local Development (Without Docker)
+
+### 1. Backend Setup
+```bash
+cd backend
+cp .env.example .env
 python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
+# Windows: venv\Scripts\activate | Linux/macOS: source venv/bin/activate
 pip install -r requirements.txt
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 4. Run the Application
+### 2. Frontend Setup
 ```bash
-python app.py
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
 ```
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
 ---
 
 ## 📄 License
 This project is open-source under the [MIT License](LICENSE).
+
