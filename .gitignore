@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Database
+*.db
+*.sqlite3
+crophealth.db
+
 # Environments
 .env
 .venv
