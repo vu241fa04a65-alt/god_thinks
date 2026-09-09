@@ -1,4 +1,4 @@
-﻿import os
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from backend.app.config import settings
@@ -25,9 +25,8 @@ except Exception:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Declarative Base and metadata
 Base = declarative_base()
-
-# Alembic-ready metadata export
 metadata = Base.metadata
 
 def get_db():
