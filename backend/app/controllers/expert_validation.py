@@ -42,17 +42,17 @@ def validate_report(
         bonus = RewardPoints(
             user_id=report.user_id,
             points=50,
-            reason=f"Expert validated your report #{report.id} ({report.crop_name})",
-            transaction_type="earned"
+            reason=f"Expert validated your report #{report.id} ({report.crop_type})"
         )
         db.add(bonus)
+        if report.user:
+            report.user.points += 50
 
         # Send SMS alert to farmer if phone number registered
-        farmer = db.query(User).filter(User.id == report.user_id).first()
-        if farmer and farmer.phone_number:
+        if report.user and report.user.phone_number:
             sms_service.send_alert(
-                to_phone=farmer.phone_number,
-                message=f"CropHealthAI: Your report for {report.crop_name} has been verified by an expert!"
+                to_phone=report.user.phone_number,
+                message=f"CropHealthAI: Your report for {report.crop_type} has been verified by an expert!"
             )
 
     db.commit()

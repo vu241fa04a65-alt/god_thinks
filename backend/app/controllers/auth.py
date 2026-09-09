@@ -54,17 +54,19 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == user_in.email).first():
+    username = user_in.username or (user_in.email.split("@")[0] if user_in.email else user_in.name.lower().replace(" ", "_"))
+    if user_in.email and db.query(User).filter(User.email == user_in.email).first():
         raise HTTPException(status_code=400, detail="Email is already registered")
-    if db.query(User).filter(User.username == user_in.username).first():
+    if db.query(User).filter(User.username == username).first():
         raise HTTPException(status_code=400, detail="Username is already taken")
 
     new_user = User(
+        name=user_in.name,
         email=user_in.email,
-        username=user_in.username,
+        username=username,
         hashed_password=get_password_hash(user_in.password),
-        phone_number=user_in.phone_number,
-        role=user_in.role or "farmer"
+        role=user_in.role or "farmer",
+        points=user_in.points or 0
     )
     db.add(new_user)
     db.commit()

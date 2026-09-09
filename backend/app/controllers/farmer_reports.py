@@ -6,7 +6,6 @@ from backend.app.models.database import get_db
 from backend.app.models.entities import Report, User, RewardPoints
 from backend.app.models.schemas import ReportCreate, ReportResponse
 from backend.app.controllers.auth import get_current_user
-from backend.app.utils.validation import validate_coordinates
 
 router = APIRouter(prefix="/reports", tags=["Farmer Reports"])
 
@@ -16,27 +15,23 @@ def create_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    validate_coordinates(report_in.location_lat, report_in.location_lon)
-
     report = Report(
         user_id=current_user.id,
-        title=report_in.title,
-        crop_name=report_in.crop_name,
-        description=report_in.description,
-        location_lat=report_in.location_lat,
-        location_lon=report_in.location_lon,
+        crop_type=report_in.crop_type,
+        image_url=report_in.image_url,
+        location=report_in.location,
         status="pending"
     )
     db.add(report)
 
-    # Award 15 reward points for submitting a field report
+    # Award 15 reward points for submitting a field report and update User points
     reward = RewardPoints(
         user_id=current_user.id,
         points=15,
-        reason=f"Submitted crop health report: {report_in.title}",
-        transaction_type="earned"
+        reason=f"Submitted crop report for {report_in.crop_type} at {report_in.location}"
     )
     db.add(reward)
+    current_user.points += 15
 
     db.commit()
     db.refresh(report)

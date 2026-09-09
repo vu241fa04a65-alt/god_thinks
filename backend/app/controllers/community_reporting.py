@@ -1,11 +1,10 @@
 from typing import List
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from backend.app.models.database import get_db
-from backend.app.models.entities import Report, DiseasePrediction
-from backend.app.models.schemas import ReportResponse
+from backend.app.models.entities import Report, CommunityTrend
+from backend.app.models.schemas import ReportResponse, CommunityTrendResponse
 
 router = APIRouter(prefix="/community", tags=["Community Reporting"])
 
@@ -16,26 +15,26 @@ def get_community_feed(
 ):
     return db.query(Report).order_by(Report.created_at.desc()).limit(limit).all()
 
+@router.get("/trends", response_model=List[CommunityTrendResponse])
+def get_community_trends(
+    location: str | None = Query(None),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    query = db.query(CommunityTrend)
+    if location:
+        query = query.filter(CommunityTrend.location.ilike(f"%{location}%"))
+    return query.order_by(CommunityTrend.count.desc()).limit(limit).all()
+
 @router.get("/outbreaks")
 def get_outbreak_hotspots(db: Session = Depends(get_db)):
-    hotspots = (
-        db.query(
-            DiseasePrediction.crop_name,
-            DiseasePrediction.disease_name,
-            func.count(DiseasePrediction.id).label("count")
-        )
-        .group_by(DiseasePrediction.crop_name, DiseasePrediction.disease_name)
-        .order_by(func.count(DiseasePrediction.id).desc())
-        .limit(5)
-        .all()
-    )
-
+    trends = db.query(CommunityTrend).order_by(CommunityTrend.count.desc()).limit(10).all()
     return [
         {
-            "crop": h.crop_name,
-            "disease": h.disease_name,
-            "reported_cases": h.count,
-            "risk_level": "High" if h.count > 10 else "Moderate"
+            "disease": t.disease_name,
+            "location": t.location,
+            "reported_cases": t.count,
+            "risk_level": "High" if t.count > 10 else "Moderate"
         }
-        for h in hotspots
+        for t in trends
     ]

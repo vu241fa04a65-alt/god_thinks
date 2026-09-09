@@ -10,6 +10,7 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def setup_db():
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -25,10 +26,10 @@ def test_root_and_health():
 def test_auth_workflow():
     # 1. Register farmer
     register_payload = {
+        "name": "Farmer John",
         "email": "farmer1@example.com",
         "username": "farmer1",
         "password": "SecretPassword123",
-        "phone_number": "+1234567890",
         "role": "farmer"
     }
     r = client.post("/api/v1/auth/register", json=register_payload)
@@ -47,15 +48,13 @@ def test_auth_workflow():
     # 3. Read /me
     me_res = client.get("/api/v1/auth/me", headers=headers)
     assert me_res.status_code == 200
-    assert me_res.json()["username"] == "farmer1"
+    assert me_res.json()["name"] == "Farmer John"
 
     # 4. Create Farmer Report
     report_data = {
-        "title": "Blight on lower tomato leaves",
-        "crop_name": "Tomato",
-        "description": "Spots spreading after monsoon rain.",
-        "location_lat": 17.385,
-        "location_lon": 78.4867
+        "crop_type": "Tomato",
+        "image_url": "https://example.com/leaf.jpg",
+        "location": "Hyderabad, Telangana"
     }
     report_res = client.post("/api/v1/reports/", json=report_data, headers=headers)
     assert report_res.status_code == 200

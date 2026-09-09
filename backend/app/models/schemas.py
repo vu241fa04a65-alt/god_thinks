@@ -1,13 +1,14 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 import datetime
 
-# User Schemas
+# 1. User Schemas
 class UserBase(BaseModel):
-    email: EmailStr
-    username: str
-    phone_number: Optional[str] = None
-    role: Optional[str] = "farmer"
+    name: str
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    role: str = "farmer"  # farmer, expert, admin
+    points: int = 0
 
 class UserCreate(UserBase):
     password: str
@@ -15,8 +16,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     created_at: datetime.datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
@@ -25,40 +25,69 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
-# Report Schemas
-class ReportCreate(BaseModel):
-    title: str
-    crop_name: str
-    description: Optional[str] = None
-    location_lat: Optional[float] = None
-    location_lon: Optional[float] = None
+# 2. Report Schemas
+class ReportBase(BaseModel):
+    crop_type: str
+    image_url: Optional[str] = None
+    location: str
 
-class ReportResponse(ReportCreate):
+class ReportCreate(ReportBase):
+    pass
+
+class ReportResponse(ReportBase):
     id: int
     user_id: int
     status: str
-    expert_notes: Optional[str] = None
     created_at: datetime.datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ReportValidationUpdate(BaseModel):
     status: str  # verified, rejected
     expert_notes: Optional[str] = None
 
-# Disease Prediction Schemas
-class DiseasePredictionResponse(BaseModel):
-    id: Optional[int] = None
-    crop_name: str
+# 3. Disease Prediction Schemas
+class DiseasePredictionBase(BaseModel):
     disease_name: str
     confidence: float
-    severity: str
-    causes: str
-    prevention: str
-    treatment: str
-    points_awarded: int = 20
+    explanation_overlay: Optional[str] = None
 
-# Gamification Schemas
+class DiseasePredictionCreate(DiseasePredictionBase):
+    report_id: Optional[int] = None
+
+class DiseasePredictionResponse(DiseasePredictionBase):
+    id: int
+    report_id: Optional[int] = None
+    crop_name: Optional[str] = None
+    created_at: datetime.datetime
+    points_awarded: int = 20
+    model_config = ConfigDict(from_attributes=True)
+
+# 4. Reward Points Schemas
+class RewardPointsBase(BaseModel):
+    points: int
+    reason: str
+
+class RewardPointsCreate(RewardPointsBase):
+    user_id: int
+
+class RewardPointsResponse(RewardPointsBase):
+    id: int
+    user_id: int
+    created_at: datetime.datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# 5. Community Trend Schemas
+class CommunityTrendBase(BaseModel):
+    disease_name: str
+    count: int = 1
+    location: str
+
+class CommunityTrendResponse(CommunityTrendBase):
+    id: int
+    updated_at: datetime.datetime
+    model_config = ConfigDict(from_attributes=True)
+
+# Gamification Summaries
 class PointsSummary(BaseModel):
     total_points: int
     badges: List[str]
@@ -66,5 +95,6 @@ class PointsSummary(BaseModel):
 
 class LeaderboardEntry(BaseModel):
     username: str
+    name: str
     total_points: int
     badge: str
