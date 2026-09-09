@@ -8,6 +8,12 @@ from backend.app.models.database import Base, engine
 
 client = TestClient(app)
 
+def unpack(res):
+    body = res.json()
+    if isinstance(body, dict) and "data" in body and body.get("success") is True:
+        return body["data"]
+    return body
+
 @pytest.fixture(autouse=True)
 def setup_db():
     Base.metadata.drop_all(bind=engine)
@@ -17,11 +23,11 @@ def setup_db():
 def test_root_and_health():
     res = client.get("/")
     assert res.status_code == 200
-    assert res.json()["status"] == "online"
+    assert unpack(res)["status"] == "online"
 
     health = client.get("/api/v1/health")
     assert health.status_code == 200
-    assert health.json()["status"] == "healthy"
+    assert unpack(health)["status"] == "healthy"
 
 def test_auth_workflow():
     # 1. Register farmer
@@ -42,13 +48,13 @@ def test_auth_workflow():
     }
     login_res = client.post("/api/v1/auth/login", data=login_data)
     assert login_res.status_code == 200
-    token = login_res.json()["access_token"]
+    token = unpack(login_res)["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
     # 3. Read /me
     me_res = client.get("/api/v1/auth/me", headers=headers)
     assert me_res.status_code == 200
-    assert me_res.json()["name"] == "Farmer John"
+    assert unpack(me_res)["name"] == "Farmer John"
 
     # 4. Create Farmer Report
     report_data = {
@@ -58,7 +64,7 @@ def test_auth_workflow():
     }
     report_res = client.post("/api/v1/reports/", json=report_data, headers=headers)
     assert report_res.status_code == 200
-    report_id = report_res.json()["id"]
+    report_id = unpack(report_res)["id"]
 
     # 5. Disease Detection with mock image
     img = Image.new("RGB", (100, 100), color="green")
@@ -75,12 +81,13 @@ def test_auth_workflow():
     # 6. Gamification points summary
     points_res = client.get("/api/v1/gamification/summary", headers=headers)
     assert points_res.status_code == 200
-    assert points_res.json()["total_points"] > 0
+    assert unpack(points_res)["total_points"] > 0
 
     # 7. Community feed
     feed_res = client.get("/api/v1/community/feed")
     assert feed_res.status_code == 200
-    assert isinstance(feed_res.json(), list)
+    feed_data = unpack(feed_res)
+    assert isinstance(feed_data, list)
 
 def test_rest_apis_suite():
     # 1. POST /auth/register and POST /auth/login (JSON)
@@ -92,14 +99,14 @@ def test_rest_apis_suite():
         "role": "farmer"
     })
     assert reg_res.status_code == 200
-    user_id = reg_res.json()["id"]
+    user_id = unpack(reg_res)["id"]
 
     login_res = client.post("/auth/login", json={
         "username": "maria_agri",
         "password": "Password123!"
     })
     assert login_res.status_code == 200
-    token = login_res.json()["access_token"]
+    token = unpack(login_res)["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
     # 2. POST /reports/upload (image upload + ML inference)
@@ -115,8 +122,7 @@ def test_rest_apis_suite():
         headers=headers
     )
     assert upload_res.status_code == 200
-    upload_data = upload_res.json()
-    assert upload_data["status"] == "success"
+    upload_data = unpack(upload_res)
     report_id = upload_data["report_id"]
     assert "disease_prediction" in upload_data
     assert "treatment_advisory" in upload_data
@@ -125,7 +131,7 @@ def test_rest_apis_suite():
     # 3. GET /reports/{id} (disease prediction + treatment advisory)
     report_res = client.get(f"/reports/{report_id}")
     assert report_res.status_code == 200
-    report_detail = report_res.json()
+    report_detail = unpack(report_res)
     assert report_detail["report"]["id"] == report_id
     assert "disease_prediction" in report_detail
     assert "treatment_advisory" in report_detail
@@ -138,11 +144,10 @@ def test_rest_apis_suite():
     # 4. GET /community/trends (aggregate outbreak data)
     trends_res = client.get("/community/trends")
     assert trends_res.status_code == 200
-    trends_data = trends_res.json()
-    assert trends_data["status"] == "success"
+    trends_data = unpack(trends_res)
     assert "total_reported_cases" in trends_data
-    assert "aggregate_trends" in trends_data
-    assert len(trends_data["aggregate_trends"]) > 0
+    assert "trends" in trends_data
+    assert len(trends_data["trends"]) > 0
 
     # 5. POST /gamification/reward (add points)
     reward_res = client.post("/gamification/reward", json={
@@ -151,8 +156,7 @@ def test_rest_apis_suite():
         "reason": "Submitted high-accuracy diseased sample"
     }, headers=headers)
     assert reward_res.status_code == 200
-    reward_data = reward_res.json()
-    assert reward_data["status"] == "success"
+    reward_data = unpack(reward_res)
     assert reward_data["points_added"] == 50
 
     # Test negative points error handling
@@ -171,8 +175,7 @@ def test_rest_apis_suite():
         "corrected_disease": "Tomato Early Blight"
     })
     assert val_res.status_code == 200
-    val_data = val_res.json()
-    assert val_data["status"] == "success"
+    val_data = unpack(val_res)
     assert val_data["validation_status"] == "verified"
 
     # Test invalid status error handling

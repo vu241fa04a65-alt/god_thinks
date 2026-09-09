@@ -1,6 +1,9 @@
+from functools import lru_cache
+from typing import Dict
+from backend.app.config import settings
 from backend.app.utils.logger import logger
 
-LANGUAGE_DICT = {
+LANGUAGE_DICT: Dict[str, Dict[str, str]] = {
     "hi": {
         "Healthy": "स्वस्थ",
         "Tomato Early Blight": "टमाटर का अगेती झुलसा",
@@ -30,10 +33,43 @@ LANGUAGE_DICT = {
 }
 
 class TranslationService:
+    def __init__(self):
+        self.api_key = settings.GOOGLE_TRANSLATE_API_KEY
+        self.client = None
+        self._cache: Dict[str, str] = {}
+
+        if self.api_key:
+            try:
+                from google.cloud import translate_v2 as translate
+                self.client = translate.Client()
+                logger.info("Google Cloud Translate client initialized.")
+            except Exception as e:
+                logger.warning(f"Google Cloud Translate initialization note: {e}")
+
+    @lru_cache(maxsize=1024)
     def translate(self, text: str, target_lang: str = "en") -> str:
+        """Translate text to target language with LRU caching."""
         if not text or target_lang == "en":
             return text
+
+        cache_key = f"{target_lang}:{text}"
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
+        # 1. Google Cloud Translate client if available
+        if self.client:
+            try:
+                result = self.client.translate(text, target_language=target_lang)
+                translated = result.get("translatedText", text)
+                self._cache[cache_key] = translated
+                return translated
+            except Exception as e:
+                logger.error(f"Google Translate API call failed: {e}")
+
+        # 2. Curated dictionary fallback
         lang_map = LANGUAGE_DICT.get(target_lang, {})
-        return lang_map.get(text, f"[{target_lang.upper()}] {text}")
+        translated = lang_map.get(text, f"[{target_lang.upper()}] {text}")
+        self._cache[cache_key] = translated
+        return translated
 
 translation_service = TranslationService()

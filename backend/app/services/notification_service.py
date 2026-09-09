@@ -1,0 +1,66 @@
+﻿import threading
+from collections import deque
+from typing import Dict, Any, List
+from backend.app.config import settings
+from backend.app.utils.logger import logger
+
+class NotificationService:
+    """
+    Notification service managing Twilio SMS delivery with queue support.
+    """
+    def __init__(self):
+        self.account_sid = settings.TWILIO_ACCOUNT_SID
+        self.auth_token = settings.TWILIO_AUTH_TOKEN
+        self.from_phone = settings.TWILIO_PHONE_NUMBER
+        self.client = None
+        self.queue = deque()
+        self.lock = threading.Lock()
+
+        if self.account_sid and self.auth_token:
+            try:
+                from twilio.rest import Client
+                self.client = Client(self.account_sid, self.auth_token)
+                logger.info("Twilio SMS Client successfully initialized in NotificationService.")
+            except Exception as e:
+                logger.warning(f"Twilio initialization note: {e}")
+
+    def send_sms(self, to_phone: str, message: str) -> Dict[str, Any]:
+        """Direct dispatch of SMS alert."""
+        if self.client and self.from_phone:
+            try:
+                msg = self.client.messages.create(
+                    body=message,
+                    from_=self.from_phone,
+                    to=to_phone
+                )
+                logger.info(f"SMS dispatched to {to_phone} via Twilio, SID: {msg.sid}")
+                return {"status": "sent", "sid": msg.sid, "recipient": to_phone}
+            except Exception as e:
+                logger.error(f"Twilio delivery error: {e}")
+
+        # Simulated fallback dispatch
+        logger.info(f"[SIMULATED SMS] To: {to_phone} | Msg: {message}")
+        return {"status": "simulated", "recipient": to_phone, "message": message}
+
+    def enqueue_sms(self, to_phone: str, message: str) -> Dict[str, Any]:
+        """Enqueue SMS notification for background/batch dispatch."""
+        with self.lock:
+            item = {"to_phone": to_phone, "message": message, "queued_at": "now"}
+            self.queue.append(item)
+            qsize = len(self.queue)
+        logger.info(f"Enqueued SMS for {to_phone}. Queue depth: {qsize}")
+        return {"status": "enqueued", "queue_position": qsize, "recipient": to_phone}
+
+    def process_queue(self) -> List[Dict[str, Any]]:
+        """Drain and dispatch queued SMS messages."""
+        results = []
+        with self.lock:
+            batch = list(self.queue)
+            self.queue.clear()
+
+        for item in batch:
+            res = self.send_sms(to_phone=item["to_phone"], message=item["message"])
+            results.append(res)
+        return results
+
+notification_service = NotificationService()
