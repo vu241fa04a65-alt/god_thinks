@@ -121,7 +121,9 @@ class ActionRewardRequest(BaseModel):
 
 class ExpertValidateRequest(BaseModel):
     report_id: int
-    status: str  # approved, verified, rejected
+    decision: Optional[str] = None  # approve, reject
+    status: Optional[str] = None    # approved, verified, rejected
+    notes: Optional[str] = None
     expert_notes: Optional[str] = None
     corrected_disease: Optional[str] = None
 

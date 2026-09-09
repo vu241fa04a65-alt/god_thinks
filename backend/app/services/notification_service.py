@@ -1,6 +1,6 @@
-﻿import threading
+import threading
 from collections import deque
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from backend.app.config import settings
 from backend.app.utils.logger import logger
 
@@ -62,5 +62,48 @@ class NotificationService:
             res = self.send_sms(to_phone=item["to_phone"], message=item["message"])
             results.append(res)
         return results
+
+    def send_email(self, to_email: str, subject: str, content: str) -> Dict[str, Any]:
+        """Dispatch or simulate email notification."""
+        logger.info(f"[EMAIL DISPATCH] To: {to_email} | Subject: {subject} | Content: {content[:100]}...")
+        return {
+            "status": "sent",
+            "channel": "email",
+            "recipient": to_email,
+            "subject": subject
+        }
+
+    def notify_reporter(
+        self,
+        user_phone: Optional[str] = None,
+        user_email: Optional[str] = None,
+        report_id: int = 0,
+        crop_type: str = "Crop",
+        decision: str = "reviewed",
+        notes: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Notify crop reporter via SMS and/or email on expert decision (e.g. rejection or approval).
+        """
+        note_str = f" Notes: {notes}" if notes else ""
+        msg = f"CropHealth Alert: Your report #{report_id} ({crop_type}) status is now {decision.upper()}.{note_str}"
+        sms_res = None
+        email_res = None
+
+        if user_phone:
+            sms_res = self.send_sms(to_phone=user_phone, message=msg)
+        if user_email:
+            email_res = self.send_email(
+                to_email=user_email,
+                subject=f"CropHealth Report #{report_id} Update: {decision.capitalize()}",
+                content=msg
+            )
+
+        return {
+            "notified": bool(sms_res or email_res),
+            "sms": sms_res,
+            "email": email_res,
+            "message": msg
+        }
 
 notification_service = NotificationService()

@@ -5,6 +5,7 @@ from backend.app.models.report import Report
 from backend.app.models.disease_prediction import DiseasePrediction
 from backend.app.models.reward import Reward, RewardPoints
 from backend.app.models.community_trend import CommunityTrend
+from backend.app.models.expert_action import ExpertAction
 
 __all__ = [
     "Base",
@@ -18,4 +19,5 @@ __all__ = [
     "Reward",
     "RewardPoints",
     "CommunityTrend",
+    "ExpertAction",
 ]
