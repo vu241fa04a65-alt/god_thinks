@@ -31,6 +31,8 @@ build/
 ml_model/datasets/*
 !ml_model/datasets/.gitkeep
 !ml_model/datasets/*.json
+!ml_model/datasets/sample/
+!ml_model/datasets/sample/**
 
 # OS generated files
 .DS_Store

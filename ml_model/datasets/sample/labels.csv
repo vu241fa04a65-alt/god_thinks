@@ -1,0 +1,11 @@
+image_name,crop,disease,severity,confidence_target,overlay_name
+01_tomato_early_blight.jpg,Tomato,Tomato Early Blight,Moderate,0.948,overlay_tomato_early_blight.png
+02_tomato_late_blight.jpg,Tomato,Tomato Late Blight,High,0.965,overlay_tomato_late_blight.png
+03_tomato_healthy.jpg,Tomato,Tomato Healthy,None,0.991,overlay_tomato_healthy.png
+04_potato_early_blight.jpg,Potato,Potato Early Blight,Moderate,0.932,overlay_potato_early_blight.png
+05_potato_late_blight.jpg,Potato,Potato Late Blight,Severe,0.978,overlay_potato_late_blight.png
+06_corn_common_rust.jpg,Corn,Corn Common Rust,Moderate,0.954,overlay_corn_common_rust.png
+07_corn_northern_leaf_blight.jpg,Corn,Corn Northern Leaf Blight,High,0.925,overlay_corn_northern_blight.png
+08_apple_scab.jpg,Apple,Apple Scab,Moderate,0.941,overlay_apple_scab.png
+09_rice_blast.jpg,Rice,Rice Blast,High,0.963,overlay_rice_blast.png
+10_wheat_yellow_rust.jpg,Wheat,Wheat Yellow Rust,High,0.957,overlay_wheat_yellow_rust.png
