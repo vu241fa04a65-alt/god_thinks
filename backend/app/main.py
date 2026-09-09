@@ -11,6 +11,8 @@ from backend.app.controllers.disease_detection import router as disease_router
 from backend.app.controllers.community_reporting import router as community_router
 from backend.app.controllers.gamification import router as gamification_router
 from backend.app.controllers.expert_validation import router as expert_router
+from backend.app.controllers.weather import router as weather_router
+from backend.app.controllers.alerts import router as alerts_router
 
 # Create DB tables
 Base.metadata.create_all(bind=engine)
@@ -31,13 +33,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Routers
-app.include_router(auth_router, prefix=settings.API_V1_STR)
-app.include_router(reports_router, prefix=settings.API_V1_STR)
-app.include_router(disease_router, prefix=settings.API_V1_STR)
-app.include_router(community_router, prefix=settings.API_V1_STR)
-app.include_router(gamification_router, prefix=settings.API_V1_STR)
-app.include_router(expert_router, prefix=settings.API_V1_STR)
+all_routers = [
+    auth_router,
+    reports_router,
+    disease_router,
+    community_router,
+    gamification_router,
+    expert_router,
+    weather_router,
+    alerts_router
+]
+
+# Include Routers with /api/v1 and at root for flexible access
+for r in all_routers:
+    app.include_router(r, prefix=settings.API_V1_STR)
+    app.include_router(r)
 
 @app.get("/")
 def root():

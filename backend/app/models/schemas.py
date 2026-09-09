@@ -98,3 +98,29 @@ class LeaderboardEntry(BaseModel):
     name: str
     total_points: int
     badge: str
+
+# New REST API Request/Response Schemas
+class LoginRequest(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: str
+
+class RewardRequest(BaseModel):
+    user_id: Optional[int] = None
+    points: int
+    reason: str
+
+class ExpertValidateRequest(BaseModel):
+    report_id: int
+    status: str  # approved, verified, rejected
+    expert_notes: Optional[str] = None
+    corrected_disease: Optional[str] = None
+
+class SMSAlertRequest(BaseModel):
+    phone_number: str
+    message: str
+
+class TreatmentAdvisory(BaseModel):
+    causes: str
+    prevention: str
+    treatment: str

@@ -15,7 +15,7 @@ def get_community_feed(
 ):
     return db.query(Report).order_by(Report.created_at.desc()).limit(limit).all()
 
-@router.get("/trends", response_model=List[CommunityTrendResponse])
+@router.get("/trends")
 def get_community_trends(
     location: str | None = Query(None),
     limit: int = Query(10, ge=1, le=50),
@@ -24,7 +24,28 @@ def get_community_trends(
     query = db.query(CommunityTrend)
     if location:
         query = query.filter(CommunityTrend.location.ilike(f"%{location}%"))
-    return query.order_by(CommunityTrend.count.desc()).limit(limit).all()
+    trends = query.order_by(CommunityTrend.count.desc()).limit(limit).all()
+
+    total_reports = sum(t.count for t in trends)
+    high_risk_zones = [t.location for t in trends if t.count >= 5]
+
+    return {
+        "status": "success",
+        "total_reported_cases": total_reports,
+        "active_regions_monitored": len(set(t.location for t in trends)),
+        "high_risk_zones": list(set(high_risk_zones)),
+        "aggregate_trends": [
+            {
+                "id": t.id,
+                "disease_name": t.disease_name,
+                "reported_cases": t.count,
+                "location": t.location,
+                "risk_level": "High" if t.count >= 10 else ("Moderate" if t.count >= 4 else "Low"),
+                "updated_at": t.updated_at.isoformat() if t.updated_at else None
+            }
+            for t in trends
+        ]
+    }
 
 @router.get("/outbreaks")
 def get_outbreak_hotspots(db: Session = Depends(get_db)):
