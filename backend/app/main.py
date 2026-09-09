@@ -37,8 +37,24 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """FastAPI Application Factory."""
+    tags_metadata = [
+        {"name": "Auth", "description": "Authentication, JWT tokens, user registration, role enforcement, and login protection."},
+        {"name": "Reports", "description": "Farmer crop scout reporting, image uploads, thumbnails, and cloud storage."},
+        {"name": "Expert", "description": "Agronomist portal for reviewing, approving, rejecting predictions, and audit trail logs."},
+        {"name": "Community", "description": "Surveillance, outbreak trends, GeoJSON clustering, and nearby report queries."},
+        {"name": "Gamification", "description": "Reward points, activity ledger, reward claim catalog, and leaderboards."},
+        {"name": "Weather Risk", "description": "Hyper-local weather risk forecasting and crop disease susceptibility models."},
+        {"name": "Advisory", "description": "Integrated pest management recommendations, biological controls, and chemical restrictions."},
+        {"name": "Alerts", "description": "SMS outbreak broadcast alerts to subscribed farmers within geo-fenced perimeters."},
+        {"name": "Sync", "description": "Offline-first batch synchronization for field scouts and low-connectivity devices."},
+        {"name": "ML Inference", "description": "Explainable AI pipeline with Grad-CAM heatmaps, bounding boxes, and visual cues."},
+        {"name": "Health", "description": "Service health checks and uptime monitoring."}
+    ]
+
     application = FastAPI(
         title=settings.PROJECT_NAME,
+        version="1.0.0",
+        openapi_tags=tags_metadata,
         openapi_url=f"{settings.API_V1_STR}/openapi.json",
         docs_url="/docs",
         redoc_url="/redoc",

@@ -48,5 +48,20 @@ class InMemoryLoginRateLimiter:
         if key in self._failures:
             del self._failures[key]
 
+    def get_rate_limit_headers(self, key: str):
+        """
+        Returns (limit, remaining, reset_seconds) for rate limit response headers.
+        """
+        now = time.time()
+        self._cleanup_expired(key, now)
+        attempts = len(self._failures.get(key, []))
+        remaining = max(0, self.max_attempts - attempts)
+        if attempts > 0:
+            oldest = self._failures[key][0]
+            reset_in = max(1, int(self.window_seconds - (now - oldest)))
+        else:
+            reset_in = self.window_seconds
+        return self.max_attempts, remaining, reset_in
+
 
 login_limiter = InMemoryLoginRateLimiter(max_attempts=5, window_seconds=300)

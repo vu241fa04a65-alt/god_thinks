@@ -28,6 +28,12 @@ class AuthAuditMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
 
+        # Inject standardized rate limit headers
+        limit_val, remaining_val, reset_val = login_limiter.get_rate_limit_headers(client_ip)
+        response.headers["X-RateLimit-Limit"] = str(limit_val)
+        response.headers["X-RateLimit-Remaining"] = str(remaining_val)
+        response.headers["X-RateLimit-Reset"] = str(reset_val)
+
         # Audit log failed authentication and authorization events
         if response.status_code in (401, 403):
             logger.warning(
