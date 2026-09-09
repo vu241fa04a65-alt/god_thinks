@@ -1,5 +1,6 @@
 import math
 from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -127,6 +128,205 @@ def send_sms_alert(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Either 'phone_number' or geo-fence coordinates ('lat' and 'lng' / 'geo_fence') must be provided"
     )
+
+
+class AlertSubscriptionRequest(BaseModel):
+    phone: str
+    preferred_language: Optional[str] = "en"  # en, hi, mr, te
+    geofence_radius_km: Optional[float] = 25.0
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    user_id: Optional[int] = None
+
+
+class AlertUnsubscribeRequest(BaseModel):
+    phone: str
+    user_id: Optional[int] = None
+
+
+@router.post("/subscribe")
+def subscribe_to_alerts(
+    req: AlertSubscriptionRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Subscribe a farmer to hyper-local SMS outbreak alerts:
+    - Validates phone number format.
+    - Sets preferred language, location, and geo-fence perimeter.
+    - Sends an immediate confirmation SMS with an opt-in code via notification_service.
+    """
+    clean_phone = req.phone.strip().replace(" ", "").replace("-", "")
+    # Basic phone validation (min 10 digits)
+    digits = [c for c in clean_phone if c.isdigit()]
+    if len(digits) < 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid mobile number format. Please provide a valid 10+ digit mobile number."
+        )
+
+    # Standardize international format if needed
+    if not clean_phone.startswith("+"):
+        if len(digits) == 10:
+            clean_phone = f"+91{clean_phone}"
+        else:
+            clean_phone = f"+{clean_phone}"
+
+    # Generate 6-digit opt-in verification code
+    import random
+    opt_in_code = f"{random.randint(100000, 999999)}"
+
+    # Check if user exists, otherwise update or create
+    user = None
+    if req.user_id:
+        user = db.query(User).filter(User.id == req.user_id).first()
+    if not user:
+        user = db.query(User).filter(User.phone == clean_phone).first()
+
+    if user:
+        user.phone = clean_phone
+        user.sms_opt_in = True
+        user.preferred_language = req.preferred_language or user.preferred_language
+        user.geofence_radius_km = req.geofence_radius_km or 25.0
+        if req.location:
+            user.location = req.location
+        if req.lat is not None:
+            user.location_lat = req.lat
+        if req.lng is not None:
+            user.location_lng = req.lng
+    else:
+        user = User(
+            name="Field Farmer",
+            phone=clean_phone,
+            sms_opt_in=True,
+            preferred_language=req.preferred_language or "en",
+            geofence_radius_km=req.geofence_radius_km or 25.0,
+            location=req.location or "Farm Field",
+            location_lat=req.lat or 17.3850,
+            location_lng=req.lng or 78.4867,
+            role="farmer",
+            points=0
+        )
+        db.add(user)
+
+    db.commit()
+    db.refresh(user)
+
+    # Send confirmation SMS with opt-in code
+    lang = user.preferred_language.lower()
+    if lang == "hi":
+        confirm_msg = (
+            f"नमस्ते! CropHealthAI अलर्ट में आपका स्वागत है। आपका पुष्टिकरण कोड है: {opt_in_code}। "
+            f"आपको {user.geofence_radius_km}km के दायरे में फसल रोग अलर्ट प्राप्त होंगे।"
+        )
+    elif lang == "mr":
+        confirm_msg = (
+            f"नमस्कार! CropHealthAI अलर्ट सेवेत आपले स्वागत आहे. आपला कोड: {opt_in_code}. "
+            f"आपल्याला {user.geofence_radius_km}km परिसरातील पीक रोग सूचना मिळतील."
+        )
+    elif lang == "te":
+        confirm_msg = (
+            f"నమస్కారం! CropHealthAI హెచ్చరికలకు స్వాగతం. మీ కోడ్: {opt_in_code}. "
+            f"మీకు {user.geofence_radius_km}km పరిధిలోని పంట తెగులు సమాచారం అందుతుంది."
+        )
+    else:
+        confirm_msg = (
+            f"Welcome to CropHealthAI Outbreak Alerts! Your verification code is {opt_in_code}. "
+            f"You are subscribed to alerts within a {user.geofence_radius_km}km geo-fence."
+        )
+
+    sms_result = None
+    try:
+        sms_result = notification_service.send_sms(to_phone=clean_phone, message=confirm_msg, bypass_throttle=True)
+    except Exception as e:
+        logger.warning(f"Could not dispatch subscription confirmation SMS to {clean_phone}: {e}")
+
+    return success_envelope(data={
+        "user_id": user.id,
+        "phone": clean_phone,
+        "sms_opt_in": True,
+        "preferred_language": user.preferred_language,
+        "geofence_radius_km": user.geofence_radius_km,
+        "location": user.location,
+        "opt_in_code": opt_in_code,
+        "confirmation_dispatched": sms_result is not None and sms_result.get("status") in ["sent", "simulated", "queued"],
+        "message": f"Successfully subscribed {clean_phone} to crop outbreak alerts"
+    })
+
+
+@router.post("/unsubscribe")
+def unsubscribe_from_alerts(
+    req: AlertUnsubscribeRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Unsubscribe a farmer from SMS outbreak notifications.
+    """
+    clean_phone = req.phone.strip().replace(" ", "").replace("-", "")
+    user = None
+    if req.user_id:
+        user = db.query(User).filter(User.id == req.user_id).first()
+    if not user:
+        user = db.query(User).filter(User.phone == clean_phone).first()
+
+    if not user:
+        # Check standard prefix
+        if not clean_phone.startswith("+"):
+            user = db.query(User).filter(User.phone == f"+91{clean_phone}").first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Subscription for {req.phone} not found"
+        )
+
+    user.sms_opt_in = False
+    db.commit()
+    db.refresh(user)
+
+    return success_envelope(data={
+        "user_id": user.id,
+        "phone": user.phone,
+        "sms_opt_in": False,
+        "message": "You have been unsubscribed from CropHealthAI SMS alerts"
+    })
+
+
+@router.get("/status")
+def get_alert_status(
+    phone: Optional[str] = None,
+    user_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Query alert subscription preferences for a phone number or user.
+    """
+    user = None
+    if user_id:
+        user = db.query(User).filter(User.id == user_id).first()
+    elif phone:
+        clean_phone = phone.strip()
+        user = db.query(User).filter(User.phone == clean_phone).first()
+        if not user and not clean_phone.startswith("+"):
+            user = db.query(User).filter(User.phone == f"+91{clean_phone}").first()
+
+    if not user:
+        return success_envelope(data={
+            "subscribed": False,
+            "sms_opt_in": False,
+            "preferred_language": "en",
+            "geofence_radius_km": 25.0
+        })
+
+    return success_envelope(data={
+        "user_id": user.id,
+        "phone": user.phone,
+        "subscribed": user.sms_opt_in,
+        "sms_opt_in": user.sms_opt_in,
+        "preferred_language": user.preferred_language,
+        "geofence_radius_km": user.geofence_radius_km,
+        "location": user.location
+    })
 
 
 @router.post("/opt-in")

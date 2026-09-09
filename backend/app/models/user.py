@@ -19,6 +19,7 @@ class User(Base):
     location = Column(String(255), nullable=True)
     location_lat = Column(Float, nullable=True)
     location_lng = Column(Float, nullable=True)
+    geofence_radius_km = Column(Float, default=25.0, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Relationships with cascade delete

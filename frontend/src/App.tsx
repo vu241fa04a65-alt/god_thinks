@@ -7,8 +7,9 @@ import { ExpertPortal } from './pages/ExpertPortal';
 import { Community } from './pages/Community';
 import { Leaderboard } from './pages/Leaderboard';
 import { Login } from './pages/Login';
+import { Settings } from './pages/Settings';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Leaf, LogOut, User as UserIcon } from 'lucide-react';
+import { Leaf, LogOut, User as UserIcon, Settings as SettingsIcon } from 'lucide-react';
 
 import { Chatbot } from './components/Chatbot';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -45,6 +46,9 @@ const NavigationBar: React.FC = () => {
             </NavLink>
             <NavLink to="/leaderboard" className={activeClass}>
               Leaderboard
+            </NavLink>
+            <NavLink to="/settings" className={activeClass}>
+              Alerts & Settings
             </NavLink>
             {isExpert && (
               <NavLink to="/expert" className={activeClass}>
@@ -116,6 +120,7 @@ export const App: React.FC = () => {
                 <Route path="/community" element={<Community />} />
                 <Route path="/expert" element={<ExpertPortal />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/settings" element={<Settings />} />
               </Routes>
             </main>
           </div>
