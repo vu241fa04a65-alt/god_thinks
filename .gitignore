@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Node modules & build
+node_modules/
+dist/
+build/
+.next/
+
+# ML models and large datasets
+*.h5
+*.keras
+*.pkl
+*.pt
+*.pth
+ml_model/datasets/*
+!ml_model/datasets/.gitkeep
+
+# OS generated files
+.DS_Store
+Thumbs.db
