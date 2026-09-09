@@ -74,6 +74,109 @@ docker compose up --build
 
 ---
 
+## 🚀 Deployment Guides
+
+### 1. Simple VPS Deployment (DigitalOcean / AWS EC2 / Linode / Hetzner)
+Deploying CropHealthAI to any Linux VPS using `docker-compose` takes under 2 minutes:
+
+1. **SSH into your VPS:**
+   ```bash
+   ssh root@your-server-ip
+   ```
+2. **Install Docker & Docker Compose:**
+   ```bash
+   curl -fsSL https://get.docker.com | sh
+   ```
+3. **Clone the repository & launch:**
+   ```bash
+   git clone https://github.com/vu241fa04a65-alt/god_thinks.git /opt/crophealth
+   cd /opt/crophealth
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   docker compose -f docker-compose.yml up -d --build
+   ```
+4. **Verify running containers:**
+   ```bash
+   docker compose ps
+   ```
+   Open `http://your-server-ip:3000` to access the web application and `http://your-server-ip:8000/docs` for API documentation.
+
+---
+
+### 2. Deploy to Docker Hub + Heroku (Container Registry)
+
+You can containerize and push directly to Docker Hub and deploy the backend to Heroku Container Registry:
+
+#### Step A: Push to Docker Hub
+```bash
+# Log in to Docker Hub
+docker login
+
+# Build, tag and push images using the deployment script:
+./scripts/deploy.sh --registry your-dockerhub-username --tag v1.0.0 --skip-tests
+```
+
+#### Step B: One-Click Deploy to Heroku
+```bash
+# 1. Login to Heroku Container Registry
+heroku login
+heroku container:login
+
+# 2. Create Heroku Apps & Managed Postgres
+heroku create crophealth-backend-api
+heroku addons:create heroku-postgresql:essential-0 -a crophealth-backend-api
+
+# 3. Tag and push container to Heroku
+docker tag your-dockerhub-username/crophealth-backend:v1.0.0 registry.heroku.com/crophealth-backend-api/web
+docker push registry.heroku.com/crophealth-backend-api/web
+
+# 4. Release and configure environment variables
+heroku container:release web -a crophealth-backend-api
+heroku config:set SECRET_KEY="your-32-character-secret-key" -a crophealth-backend-api
+heroku config:set ENVIRONMENT="production" -a crophealth-backend-api
+
+# 5. Open deployed backend
+heroku open -a crophealth-backend-api
+```
+
+---
+
+### 3. Kubernetes Deployment (k8s)
+
+Deploy the multi-replica scalable stack to any Kubernetes cluster (EKS, AKS, GKE, or Minikube):
+
+```bash
+# 1. Review or customize secrets
+cp k8s/secrets.template.yaml k8s/secrets.yaml
+# (Edit k8s/secrets.yaml with production database and API credentials)
+
+# 2. Deploy all manifests using Kustomize:
+kubectl apply -k k8s/
+
+# 3. Monitor rollout:
+kubectl rollout status deployment/crophealth-backend -n crophealth
+kubectl rollout status deployment/crophealth-frontend -n crophealth
+
+# 4. Check services & ingress:
+kubectl get svc,ingress -n crophealth
+```
+
+---
+
+### 4. Managed Cloud Infrastructure via Terraform
+
+Provision AWS RDS PostgreSQL and S3 Object Storage with automated backups and encryption:
+
+```bash
+# Dry-run infrastructure simulation:
+./scripts/terraform_stub.sh plan
+
+# Provision real cloud resources:
+./scripts/terraform_stub.sh apply
+```
+
+---
+
 ## ⚡ Local Development (Without Docker)
 
 ### 1. Backend Setup
@@ -98,4 +201,5 @@ npm run dev
 
 ## 📄 License
 This project is open-source under the [MIT License](LICENSE).
+
 

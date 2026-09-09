@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crophealth
+  labels:
+    app.kubernetes.io/name: crophealth
+    app.kubernetes.io/part-of: crophealth-platform
