@@ -1,0 +1,57 @@
+reward_rules:
+  first_disease_in_village:
+    name: "First Disease Report in Village"
+    points: 10
+    description: "First report of a crop disease in a village or local sector"
+  validated_report:
+    name: "Expert Validated Report"
+    points: 5
+    description: "Crop scout report validated and confirmed by an agronomist"
+  share_advisory:
+    name: "Share Treatment Advisory"
+    points: 2
+    description: "Sharing pest/disease prevention or IPM advisory with fellow farmers"
+  routine_scout:
+    name: "Routine Crop Scout"
+    points: 1
+    description: "Submitting periodic field health observation"
+
+tiers_and_badges:
+  - id: "eco_scout"
+    name: "Eco Scout"
+    min_points: 0
+    badge: "🌱 Eco Scout"
+  - id: "plant_doctor"
+    name: "Plant Doctor"
+    min_points: 50
+    badge: "🌾 Plant Doctor"
+  - id: "master_agronomist"
+    name: "Master Agronomist"
+    min_points: 150
+    badge: "⭐ Master Agronomist"
+  - id: "crop_guardian"
+    name: "Village Crop Guardian"
+    min_points: 300
+    badge: "🏆 Village Crop Guardian"
+
+claimable_rewards:
+  - id: "voucher_fertilizer_10"
+    name: "Bio-Fertilizer 10% Discount Voucher"
+    category: "Agro Inputs"
+    cost_points: 30
+    description: "Redeemable at certified agricultural co-ops for bio-fertilizers."
+  - id: "voucher_seeds_pack"
+    name: "Certified Disease-Resistant Seeds Pack"
+    category: "Seeds"
+    cost_points: 60
+    description: "1kg certified hybrid disease-resistant seeds."
+  - id: "ipm_pheromone_kit"
+    name: "IPM Pheromone Pest Trap Kit"
+    category: "Crop Protection"
+    cost_points: 100
+    description: "Set of 5 field pheromone traps for pest monitoring."
+  - id: "soil_test_voucher"
+    name: "Free Laboratory Soil Health Test"
+    category: "Services"
+    cost_points: 150
+    description: "Comprehensive 12-parameter soil fertility analysis."

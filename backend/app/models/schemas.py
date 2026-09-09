@@ -107,8 +107,17 @@ class LoginRequest(BaseModel):
 
 class RewardRequest(BaseModel):
     user_id: Optional[int] = None
-    points: int
+    points: Optional[int] = None
     reason: str
+
+class ClaimRewardRequest(BaseModel):
+    reward_item_id: str
+    user_id: Optional[int] = None
+
+class ActionRewardRequest(BaseModel):
+    action: str
+    user_id: Optional[int] = None
+    context: Optional[dict] = None
 
 class ExpertValidateRequest(BaseModel):
     report_id: int
