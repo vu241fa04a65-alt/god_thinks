@@ -8,6 +8,7 @@ import { Community } from './pages/Community';
 import { Leaderboard } from './pages/Leaderboard';
 import { Login } from './pages/Login';
 import { Settings } from './pages/Settings';
+import { AdvisoryLibrary } from './pages/AdvisoryLibrary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { Leaf, LogOut, User as UserIcon, Settings as SettingsIcon } from 'lucide-react';
@@ -47,6 +48,9 @@ const NavigationBar: React.FC = () => {
             </NavLink>
             <NavLink to="/leaderboard" className={activeClass}>
               Leaderboard
+            </NavLink>
+            <NavLink to="/advisory" className={activeClass}>
+              Advisory Library
             </NavLink>
             <NavLink to="/settings" className={activeClass}>
               Alerts & Settings
@@ -127,6 +131,7 @@ export const App: React.FC = () => {
                   <Route path="/community" element={<Community />} />
                   <Route path="/expert" element={<ExpertPortal />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/advisory" element={<AdvisoryLibrary />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </main>

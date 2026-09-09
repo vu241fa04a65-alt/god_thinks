@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Layers, ShieldCheck, Share2, AlertTriangle, CheckCircle2, ChevronRight, ExternalLink } from 'lucide-react';
+import { Layers, ShieldCheck, Share2, AlertTriangle, CheckCircle2, ChevronRight, ExternalLink, Leaf } from 'lucide-react';
+import { AdvisoryCard } from './AdvisoryCard';
 
 export interface DiseaseResult {
   report_id?: number;
@@ -289,6 +290,15 @@ export const DiseaseResultCard: React.FC<DiseaseResultCardProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Comprehensive IPM Treatment Advisory */}
+      <div className="p-6 sm:p-8 bg-slate-50 border-t border-gray-100">
+        <AdvisoryCard
+          crop={result.crop_type}
+          disease={result.disease_predicted}
+          className="shadow-none border border-slate-200"
+        />
       </div>
     </div>
   );

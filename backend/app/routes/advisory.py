@@ -310,3 +310,87 @@ def recommend_advisory(
     }
 
     return success_envelope(data=data)
+
+
+@router.get("/pesticides")
+def list_pesticides(
+    crop: Optional[str] = Query(None, description="Filter by crop"),
+    disease: Optional[str] = Query(None, description="Filter by disease"),
+    eco_friendly: Optional[bool] = Query(None, description="Filter eco-friendly options only"),
+    region: Optional[str] = Query(None, description="Regional compliance jurisdiction"),
+    search: Optional[str] = Query(None, description="Search term for name or active ingredient")
+):
+    """
+    Searchable and filterable catalog of certified chemical pesticides and biological controls.
+    Annotates each item with pre-harvest intervals, residue risk levels, and regional restriction statuses.
+    """
+    dataset = load_pesticides_dataset()
+    results = []
+
+    for item in dataset:
+        if crop:
+            norm_c = crop.lower().strip()
+            if not any(norm_c in c or c in norm_c for c in item["crops"]):
+                continue
+
+        if disease:
+            norm_d = disease.lower().strip()
+            if not any(norm_d in d or d in norm_d for d in item["target_diseases"]):
+                continue
+
+        if eco_friendly is not None and item["eco_friendly_flag"] != eco_friendly:
+            continue
+
+        if search:
+            norm_s = search.lower().strip()
+            in_name = norm_s in item["name"].lower()
+            in_ai = norm_s in item["active_ingredient"].lower()
+            in_notes = norm_s in item["notes"].lower()
+            in_crops = any(norm_s in c for c in item["crops"])
+            in_diseases = any(norm_s in d for d in item["target_diseases"])
+            if not (in_name or in_ai or in_notes or in_crops or in_diseases):
+                continue
+
+        reg_check = check_regional_status(item["name"], item["active_ingredient"], region)
+
+        # Compute residue risk level
+        phi = item["pre_harvest_interval_days"]
+        if item["eco_friendly_flag"]:
+            residue_risk = "Low / Zero Residue"
+            residue_level = "low"
+        elif phi <= 7:
+            residue_risk = "Low Residue (Standard Wash Off)"
+            residue_level = "low"
+        elif phi <= 14:
+            residue_risk = "Moderate Residue (Adhere to PHI)"
+            residue_level = "moderate"
+        else:
+            residue_risk = "High Residue Persistence (Strict PHI Required)"
+            residue_level = "high"
+
+        results.append({
+            "name": item["name"],
+            "active_ingredient": item["active_ingredient"],
+            "crops": item["crops"],
+            "target_diseases": item["target_diseases"],
+            "dosage_ml_per_liter": item["dosage_ml_per_liter"],
+            "dosage": f"{item['dosage_ml_per_liter']} ml/L of water",
+            "pre_harvest_interval_days": phi,
+            "eco_friendly": item["eco_friendly_flag"],
+            "eco_friendly_flag": item["eco_friendly_flag"],
+            "category": "Biological / Bio-Pesticide" if item["eco_friendly_flag"] else "Synthetic Agro-Chemical",
+            "residue_risk": residue_risk,
+            "residue_level": residue_level,
+            "safety_notes": item["notes"],
+            "regional_status": reg_check["status"],
+            "regional_warning": reg_check["warning"],
+            "is_banned": reg_check["is_banned"],
+            "is_restricted": reg_check["is_restricted"]
+        })
+
+    return success_envelope(data={
+        "total": len(results),
+        "region": region,
+        "pesticides": results
+    })
+

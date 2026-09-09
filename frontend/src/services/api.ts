@@ -200,6 +200,15 @@ export const AdvisoryService = {
   getRecommendations: async (crop: string, disease: string, region?: string) => {
     return api.get('/advisory/recommend', { params: { crop, disease, region } });
   },
+  getPesticides: async (params?: {
+    crop?: string;
+    disease?: string;
+    eco_friendly?: boolean;
+    region?: string;
+    search?: string;
+  }) => {
+    return api.get('/advisory/pesticides', { params });
+  },
 };
 
 export const ChatbotService = {
