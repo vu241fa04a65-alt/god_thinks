@@ -17,7 +17,7 @@ from backend.app.routes.expert import router as expert_router
 from backend.app.routes.community import router as community_router
 from backend.app.routes.gamification import router as gamification_router
 from backend.app.controllers.disease_detection import router as disease_router
-from backend.app.controllers.weather import router as weather_router
+from backend.app.routes.weather import router as weather_router
 from backend.app.controllers.alerts import router as alerts_router
 from backend.app.routes.ml_proxy import router as ml_router
 

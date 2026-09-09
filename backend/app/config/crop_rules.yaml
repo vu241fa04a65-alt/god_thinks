@@ -1,0 +1,188 @@
+# Crop Health & Microclimate Vulnerability Rules
+# Thresholds for Fungal, Bacterial, and Pest Risk Scoring
+
+Tomato:
+  fungal:
+    min_humidity: 70
+    min_temp: 16.0
+    max_temp: 28.0
+    rain_probability_threshold: 40
+    risk_weight: 40
+    diseases:
+      - "Tomato Early Blight"
+      - "Tomato Late Blight"
+      - "Septoria Leaf Spot"
+  bacterial:
+    min_humidity: 75
+    min_temp: 24.0
+    max_temp: 32.0
+    rain_probability_threshold: 50
+    risk_weight: 30
+    diseases:
+      - "Bacterial Spot (Xanthomonas)"
+      - "Bacterial Canker"
+  pest:
+    max_humidity: 55
+    min_temp: 28.0
+    risk_weight: 30
+    pests:
+      - "Whitefly (Bemisia tabaci)"
+      - "Two-Spotted Spider Mite"
+      - "Tomato Fruit Borer"
+  preventive_actions:
+    - "Apply copper octanoate or azoxystrobin spray ahead of persistent damp weather."
+    - "Prune lower foliar canopy to enhance airflow and minimize soil splash."
+    - "Deploy yellow sticky cards along field margins to monitor whitefly vectors."
+    - "Avoid overhead sprinkler irrigation; irrigate strictly at ground level."
+
+Potato:
+  fungal:
+    min_humidity: 75
+    min_temp: 14.0
+    max_temp: 26.0
+    rain_probability_threshold: 45
+    risk_weight: 45
+    diseases:
+      - "Potato Late Blight (Phytophthora infestans)"
+      - "Early Blight (Alternaria solani)"
+  bacterial:
+    min_humidity: 80
+    min_temp: 20.0
+    max_temp: 30.0
+    rain_probability_threshold: 55
+    risk_weight: 30
+    diseases:
+      - "Blackleg (Pectobacterium)"
+      - "Bacterial Soft Rot"
+  pest:
+    max_humidity: 60
+    min_temp: 24.0
+    risk_weight: 25
+    pests:
+      - "Colorado Potato Beetle"
+      - "Potato Aphid"
+  preventive_actions:
+    - "Schedule preventative Mancozeb or systemic triazole application."
+    - "Maintain hilling and furrow drainage to prevent waterlogging around tuber beds."
+    - "Scout canopy stems for dark water-soaked late blight lesions."
+
+Corn:
+  fungal:
+    min_humidity: 65
+    min_temp: 18.0
+    max_temp: 28.0
+    rain_probability_threshold: 35
+    risk_weight: 35
+    diseases:
+      - "Corn Common Rust (Puccinia sorghi)"
+      - "Northern Corn Leaf Blight"
+  bacterial:
+    min_humidity: 70
+    min_temp: 26.0
+    max_temp: 34.0
+    rain_probability_threshold: 50
+    risk_weight: 30
+    diseases:
+      - "Goss's Bacterial Wilt"
+      - "Bacterial Stalk Rot"
+  pest:
+    max_humidity: 65
+    min_temp: 26.0
+    risk_weight: 35
+    pests:
+      - "Fall Armyworm (Spodoptera frugiperda)"
+      - "Corn Earworm"
+  preventive_actions:
+    - "Inspect central leaf whorls for pinhole feeding and armyworm frass."
+    - "Apply strobilurin or triazole fungicide if rust pustules emerge prior to tasseling."
+    - "Avoid late nitrogen top-dressing during high humidity periods."
+
+Apple:
+  fungal:
+    min_humidity: 70
+    min_temp: 12.0
+    max_temp: 24.0
+    rain_probability_threshold: 40
+    risk_weight: 45
+    diseases:
+      - "Apple Scab (Venturia inaequalis)"
+      - "Powdery Mildew"
+  bacterial:
+    min_humidity: 65
+    min_temp: 18.0
+    max_temp: 29.0
+    rain_probability_threshold: 40
+    risk_weight: 35
+    diseases:
+      - "Fire Blight (Erwinia amylovora)"
+  pest:
+    max_humidity: 60
+    min_temp: 22.0
+    risk_weight: 25
+    pests:
+      - "Codling Moth"
+      - "Rosy Apple Aphid"
+  preventive_actions:
+    - "Apply captan or dodine fungicide within Mills period infection windows."
+    - "Prune blighted strikes and diseased shoots during dry atmospheric conditions."
+    - "Hang pheromone delta traps for codling moth flight tracking."
+
+Grape:
+  fungal:
+    min_humidity: 75
+    min_temp: 15.0
+    max_temp: 28.0
+    rain_probability_threshold: 40
+    risk_weight: 45
+    diseases:
+      - "Grape Black Rot (Guignardia bidwellii)"
+      - "Downy Mildew (Plasmopara viticola)"
+      - "Powdery Mildew"
+  bacterial:
+    min_humidity: 70
+    min_temp: 20.0
+    max_temp: 30.0
+    rain_probability_threshold: 50
+    risk_weight: 25
+    diseases:
+      - "Crown Gall"
+  pest:
+    max_humidity: 50
+    min_temp: 27.0
+    risk_weight: 30
+    pests:
+      - "Grape Berry Moth"
+      - "Grape Leafhopper"
+  preventive_actions:
+    - "Perform shoot positioning and lateral tucking to ensure fruit cluster ventilation."
+    - "Apply preventive mancozeb or copper octanoate spray prior to forecast rains."
+    - "Inspect underside of leaves for oil-spot downy mildew lesions."
+
+Default:
+  fungal:
+    min_humidity: 70
+    min_temp: 16.0
+    max_temp: 28.0
+    rain_probability_threshold: 40
+    risk_weight: 40
+    diseases:
+      - "General Foliar Fungal Blight"
+      - "Leaf Spot Pathogen"
+  bacterial:
+    min_humidity: 75
+    min_temp: 24.0
+    max_temp: 32.0
+    rain_probability_threshold: 50
+    risk_weight: 30
+    diseases:
+      - "Bacterial Leaf Blight"
+  pest:
+    max_humidity: 55
+    min_temp: 28.0
+    risk_weight: 30
+    pests:
+      - "Foliar Sucking Pests (Aphids/Mites)"
+  preventive_actions:
+    - "Maintain standard field scouting and inspect vulnerable new foliage."
+    - "Ensure row aeration and avoid sprinkler leaf wetting in the evening."
+    - "Apply broad-spectrum organic neem extract or bio-fungicide preventatively."
