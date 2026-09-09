@@ -41,4 +41,9 @@ backend/storage/overlays/*.jpg
 backend/storage/overlays/*.jpeg
 backend/storage/overlays/*.png
 !backend/storage/overlays/.gitkeep
+ml_model/output/*.png
+ml_model/output/*.jpg
+ml_model/output/*.jpeg
+!ml_model/output/.gitkeep
+
 

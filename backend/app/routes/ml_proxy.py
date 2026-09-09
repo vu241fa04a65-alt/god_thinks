@@ -16,11 +16,13 @@ router = APIRouter(prefix="/ml", tags=["ML Inference"])
 async def infer_disease(
     file: UploadFile = File(...),
     report_id: Optional[int] = Form(None),
+    confidence_threshold: Optional[float] = Form(0.25),
     db: Session = Depends(get_db)
 ):
     """
-    Accept image file, save to temporary path, run ML inference,
-    persist a DiseasePrediction database record, and return diagnosis with XAI overlay.
+    Accept image file, save to temporary path, run ML inference with Grad-CAM explainability,
+    persist a DiseasePrediction database record, and return diagnosis with bounding boxes,
+    mask polygons, and XAI overlay.
     """
     if not file or not file.filename:
         raise HTTPException(status_code=400, detail="No valid image file uploaded")
@@ -45,15 +47,15 @@ async def infer_disease(
         # Import inference pipeline
         from ml_model.inference import predict
 
-        logger.info(f"Executing ML inference on uploaded image '{file.filename}' via temp path '{temp_path}'")
-        prediction_result = predict(temp_path)
+        logger.info(f"Executing ML inference on uploaded image '{file.filename}' with conf_threshold={confidence_threshold}")
+        prediction_result = predict(temp_path, conf_threshold=confidence_threshold or 0.25)
 
         # Persist DiseasePrediction in Database
         db_prediction = DiseasePrediction(
             report_id=report_id,
             disease_name=prediction_result.get("disease_name", "Unknown Foliar Anomaly"),
             confidence=float(prediction_result.get("confidence", 0.0)),
-            overlay_path=prediction_result.get("overlay_image_path"),
+            overlay_path=prediction_result.get("overlay_image_path") or prediction_result.get("backend_overlay_path"),
             explanation_text=prediction_result.get("explanation_text")
         )
         db.add(db_prediction)
@@ -65,10 +67,14 @@ async def infer_disease(
             "report_id": db_prediction.report_id,
             "disease_name": db_prediction.disease_name,
             "confidence": db_prediction.confidence,
+            "confidence_threshold": prediction_result.get("confidence_threshold", confidence_threshold),
             "top_predictions": prediction_result.get("top_predictions", []),
             "heatmap_base64": prediction_result.get("heatmap_base64"),
             "explanation_text": db_prediction.explanation_text,
-            "overlay_image_path": db_prediction.overlay_path,
+            "visual_cues": prediction_result.get("visual_cues"),
+            "infected_regions": prediction_result.get("infected_regions", []),
+            "overlay_image_path": prediction_result.get("overlay_image_path"),
+            "backend_overlay_path": prediction_result.get("backend_overlay_path"),
             "crop_name": prediction_result.get("crop_name"),
             "severity": prediction_result.get("severity")
         }

@@ -43,6 +43,9 @@ def test_inference_predict_function():
     assert "explanation_text" in result
     assert "top_predictions" in result
     assert "overlay_image_path" in result
+    assert "backend_overlay_path" in result
+    assert "infected_regions" in result
+    assert "visual_cues" in result
 
     # Check top 3 predictions
     assert len(result["top_predictions"]) >= 3
@@ -51,9 +54,18 @@ def test_inference_predict_function():
         assert "confidence" in p
         assert isinstance(p["confidence"], (float, int))
 
-    # Check overlay file existence
+    # Check infected regions format (boxes and polygons)
+    assert isinstance(result["infected_regions"], list)
+    if result["infected_regions"]:
+        r = result["infected_regions"][0]
+        assert "box" in r and len(r["box"]) == 4
+        assert "polygon" in r
+        assert isinstance(r["polygon"], list)
+
+    # Check dual overlay file existence
     assert os.path.exists(result["overlay_image_path"])
-    assert result["heatmap_base64"].startswith("data:image/jpeg;base64,")
+    assert os.path.exists(result["backend_overlay_path"])
+    assert "data:image/" in result["heatmap_base64"]
 
 
 def test_deterministic_stub_model():
@@ -91,7 +103,10 @@ def test_ml_proxy_infer_endpoint():
     assert len(data["top_predictions"]) >= 3
     assert "heatmap_base64" in data
     assert "explanation_text" in data
+    assert "visual_cues" in data
+    assert "infected_regions" in data
     assert "overlay_image_path" in data
+    assert "backend_overlay_path" in data
 
     # Verify database persistence
     db = SessionLocal()
