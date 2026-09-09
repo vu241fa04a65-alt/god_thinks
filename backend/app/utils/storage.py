@@ -191,10 +191,14 @@ def save_image(
     image_bytes = b""
 
     # 1. Extract bytes and original filename
-    if isinstance(file, UploadFile):
-        filename = file.filename or "upload.jpg"
-        file.file.seek(0)
+    from starlette.datastructures import UploadFile as StarletteUploadFile
+    if isinstance(file, (UploadFile, StarletteUploadFile)) or (hasattr(file, "file") and hasattr(file, "filename")):
+        filename = getattr(file, "filename", None) or "upload.jpg"
+        if hasattr(file.file, "seek"):
+            file.file.seek(0)
         image_bytes = file.file.read()
+        if isinstance(image_bytes, str):
+            image_bytes = image_bytes.encode("utf-8")
     elif isinstance(file, bytes):
         image_bytes = file
     elif isinstance(file, io.BytesIO):

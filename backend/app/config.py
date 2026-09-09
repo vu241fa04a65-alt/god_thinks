@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     MAX_IMAGE_SIZE_MB: int = int(os.getenv("MAX_IMAGE_SIZE_MB", "10"))
     STORAGE_BASE_URL: str = os.getenv("STORAGE_BASE_URL", "/storage")
 
+    # Caching / Redis
+    REDIS_URL: Optional[str] = os.getenv("REDIS_URL", "")
+
     model_config = ConfigDict(
         env_file=".env",
         case_sensitive=True,
