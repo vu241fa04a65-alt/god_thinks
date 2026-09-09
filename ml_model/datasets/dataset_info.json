@@ -1,0 +1,26 @@
+{
+  "dataset_name": "PlantVillage & Field Foliar Disease Benchmark",
+  "format": "Foliar image classification & bounding box detection",
+  "splits": [
+    "train",
+    "val",
+    "test"
+  ],
+  "total_classes": 116,
+  "supported_crops": [
+    "Tomato",
+    "Corn",
+    "Potato",
+    "Apple",
+    "Grape",
+    "Rice",
+    "Cassava",
+    "Banana",
+    "Cucumber",
+    "Bell Pepper"
+  ],
+  "sample_images": [
+    "sample_images/healthy_leaf_sample.jpg",
+    "sample_images/diseased_leaf_sample.jpg"
+  ]
+}

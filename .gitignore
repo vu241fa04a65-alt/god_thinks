@@ -30,6 +30,7 @@ build/
 *.pth
 ml_model/datasets/*
 !ml_model/datasets/.gitkeep
+!ml_model/datasets/*.json
 
 # OS generated files
 .DS_Store
