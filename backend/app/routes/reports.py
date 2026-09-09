@@ -6,6 +6,7 @@ from backend.app.database import get_db
 from backend.app.models.entities import Report, User, RewardPoints, DiseasePrediction, CommunityTrend
 from backend.app.routes.auth import get_current_user, get_optional_current_user
 from backend.app.services.ml_service import ml_service
+from backend.app.utils.storage import save_image
 from backend.app.routes import success_envelope, error_envelope
 
 router = APIRouter(prefix="/reports", tags=["Farmer Reports"])
@@ -100,8 +101,12 @@ async def upload_report(
             db.refresh(guest_user)
         user_id = guest_user.id
 
-    # Create Report
-    image_url = f"/uploads/{file.filename}"
+    # Save image via storage subsystem with thumbnail & web optimization
+    try:
+        stored = save_image(image_bytes, subfolder="uploads")
+        image_url = stored.public_url
+    except Exception:
+        image_url = f"/uploads/{file.filename}"
     report = Report(
         user_id=user_id,
         crop_type=detected_crop,

@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 
@@ -26,6 +27,14 @@ class Settings(BaseSettings):
     ML_INFERENCE_ENDPOINT: str = os.getenv("ML_INFERENCE_ENDPOINT", "http://localhost:8000/ml/inference")
     ML_RUN_LOCAL: bool = os.getenv("ML_RUN_LOCAL", "true").lower() in ("true", "1", "yes")
     INTERNAL_ML_ENDPOINT: str = os.getenv("INTERNAL_ML_ENDPOINT", "http://127.0.0.1:8000/ml/infer")
+
+    # Cloud Storage / AWS S3
+    S3_BUCKET_NAME: Optional[str] = os.getenv("S3_BUCKET_NAME", "")
+    AWS_ACCESS_KEY_ID: Optional[str] = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY: Optional[str] = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    MAX_IMAGE_SIZE_MB: int = int(os.getenv("MAX_IMAGE_SIZE_MB", "10"))
+    STORAGE_BASE_URL: str = os.getenv("STORAGE_BASE_URL", "/storage")
 
     model_config = ConfigDict(
         env_file=".env",

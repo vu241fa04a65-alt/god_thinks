@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -120,6 +121,11 @@ def create_app() -> FastAPI:
     for r in routers:
         application.include_router(r, prefix=settings.API_V1_STR)
         application.include_router(r)
+
+    # Static file serving for stored images, overlays, and thumbnails
+    from backend.app.utils.storage import STORAGE_DIR, UPLOADS_DIR
+    application.mount("/storage", StaticFiles(directory=STORAGE_DIR), name="storage")
+    application.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
     return application
 
